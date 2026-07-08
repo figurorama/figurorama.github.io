@@ -135,12 +135,12 @@
                         <ol class="list-decimal pl-4 space-y-2">
                             <li><strong class="font-bold text-gray-800 dark:text-white">Lewat Tokopedia:</strong> Klik tombol <em>"Beli Lewat Tokopedia"</em> pada detail produk (catatan: harga mungkin sedikit berbeda karena biaya layanan platform).</li>
                             <li>
-                                <strong class="font-bold text-gray-800 dark:text-white">Lewat WhatsApp (Multiple Order / Lebih Praktis):</strong>
+                                <strong class="font-bold text-gray-800 dark:text-white">Lewat WhatsApp & Google Form (Lebih Praktis):</strong>
                                 <ul class="list-disc pl-4 mt-1 space-y-1">
                                     <li>Klik <em>"Tambah ke Keranjang Belanja"</em> pada produk-produk yang ingin Anda beli.</li>
-                                    <li>Setelah selesai memilih, buka keranjang dan klik tombol <strong class="font-bold">"Lanjut Isi Form & Kirim ke WA"</strong>.</li>
-                                    <li>Anda akan diarahkan untuk mengirim detail pesanan ke WhatsApp Admin dan mengisi formulir alamat.</li>
-                                    <li>Lakukan transfer pembayaran ke <strong class="font-bold text-gray-800 dark:text-white">Rekening BCA 0095584654 a.n. Tjoeng Tjondro Kurniadi</strong>.</li>
+                                    <li>Setelah selesai, buka keranjang dan klik <strong class="font-bold">"Lanjut Isi Form Alamat"</strong>.</li>
+                                    <li>Formulir pengiriman barang akan terbuka. Isi alamat lengkap Anda di form tersebut terlebih dahulu.</li>
+                                    <li>Setelah form diisi, tekan tombol <strong class="font-bold">"Kirim Pesanan ke WA Admin"</strong> untuk koordinasi transfer pembayaran ke <strong class="font-bold text-gray-800 dark:text-white">Rekening BCA 0095584654 a.n. Tjoeng Tjondro Kurniadi</strong>.</li>
                                 </ul>
                             </li>
                         </ol>
@@ -213,22 +213,34 @@
                 <span id="cart-total-price" class="font-black text-xl text-emerald-700 dark:text-emerald-400">Rp0</span>
             </div>
             <button onclick="checkoutCart()" class="w-full text-center py-3.5 font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition shadow-md text-sm">
-                📝 Lanjut Isi Form & Kirim ke WA
+                📝 Lanjut Isi Form Alamat
             </button>
         </div>
     </div>
 
     <div id="form-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full h-[90vh] overflow-hidden shadow-2xl relative flex flex-col border dark:border-gray-700">
-            <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900 rounded-t-2xl">
-                <div>
-                    <h3 class="font-extrabold text-base text-gray-800 dark:text-white">📝 Formulir Pengiriman Alamat</h3>
-                    <p class="text-xs text-amber-600 dark:text-amber-400 font-medium mt-0.5">💡 List belanjaan telah disalin otomatis! Silakan tempel (Paste) di kolom formulir jika dibutuhkan.</p>
+            <div class="p-4 border-b dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-50 dark:bg-gray-900 rounded-t-2xl gap-3">
+                <div class="flex-1">
+                    <h3 class="font-extrabold text-base text-gray-800 dark:text-white">📝 Langkah 1: Isi Formulir Pengiriman Alamat</h3>
+                    <p class="text-xs text-amber-600 dark:text-amber-400 font-medium mt-0.5">💡 List belanjaan Anda otomatis terisi di dalam form di bawah ini!</p>
                 </div>
-                <button onclick="closeFormModal()" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold h-8 w-8 rounded-full flex items-center justify-center transition">✕</button>
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button onclick="closeFormModal()" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold h-8 w-8 rounded-full flex items-center justify-center transition order-last sm:order-none">✕</button>
+                </div>
             </div>
+            
             <div class="flex-1 bg-white dark:bg-gray-800 relative">
                 <iframe id="google-form-iframe" src="" class="w-full h-full border-0" allow="autoplay">Memuat Form Pengiriman...</iframe>
+            </div>
+
+            <div class="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <p class="text-xs text-gray-500 dark:text-gray-400 text-center sm:text-left font-semibold">
+                    Langkah 2: Setelah menekan tombol "Kirim/Submit" di dalam form, klik tombol hijau di samping kanan ➔
+                </p>
+                <button id="form-submit-wa-btn" onclick="sendWhatsAppDirectly()" class="w-full sm:w-auto px-6 py-3 text-center font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition shadow-md flex items-center justify-center gap-2 text-sm whitespace-nowrap">
+                    🚀 Langkah Kedua: Kirim ke WA Admin
+                </button>
             </div>
         </div>
     </div>
@@ -262,6 +274,7 @@
         let currentPage = 1;
         
         let isModalChangingInternal = false;
+        let cachedWhatsAppUrl = ""; // Menyimpan tautan WA yang dibuat secara dinamis
 
         async function fetchProducts() {
             try {
@@ -302,7 +315,6 @@
             if (currentCategory === 'habis') {
                 baseProducts = allProducts.filter(p => p.Status && p.Status.trim().toLowerCase() === 'kosong');
             } else if (currentCategory === 'all') {
-                // Menyaring agar kategori 'others' tidak tertampil di 'All Items'
                 baseProducts = allProducts.filter(p => (!p.Status || p.Status.trim().toLowerCase() !== 'kosong') && (!p.Kategori || p.Kategori.trim().toLowerCase() !== 'others'));
             } else {
                 baseProducts = allProducts.filter(p => p.Kategori && p.Kategori.trim().toLowerCase() === currentCategory && (!p.Status || p.Status.trim().toLowerCase() !== 'kosong'));
@@ -531,7 +543,6 @@
         window.addEventListener('popstate', function(event) {
             if (isModalChangingInternal) return;
 
-            // Logika penutupan dinamis untuk semua tipe modal/drawer saat aksi back di browser
             const productModal = document.getElementById('product-modal');
             const faqModal = document.getElementById('faq-modal');
             const cartDrawer = document.getElementById('cart-drawer');
@@ -584,11 +595,11 @@
             }
         }
 
-        // --- MANIPULASI MODAL GOOGLE FORM ---
         function openFormModal(finalFormUrl) {
             document.getElementById('google-form-iframe').src = finalFormUrl;
             document.getElementById('form-modal').classList.remove('hidden');
         }
+
         function closeFormModal(isFromPopstate = false) {
             document.getElementById('form-modal').classList.add('hidden');
             document.getElementById('google-form-iframe').src = "";
@@ -598,6 +609,10 @@
                 isModalChangingInternal = false;
             }
         }
+
+        document.getElementById('form-modal').addEventListener('click', function(e) {
+            if(e.target === this) closeFormModal();
+        });
 
         function toggleCartDrawer(isFromPopstate = false) {
             const drawer = document.getElementById('cart-drawer');
@@ -689,6 +704,7 @@
             document.getElementById('cart-total-price').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalHarga).replace(/\s?/g, '');
         }
 
+        // --- UPDATE LOGIKA CHECKOUT (REVERSED FLOW) ---
         function checkoutCart() {
             if (cart.length === 0) return alert("Keranjang Anda kosong!");
 
@@ -703,33 +719,43 @@
             const formattedTotal = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalHarga).replace(/\s?/g, '');
             textDaftarBelanja += `\nESTIMASI TOTAL: ${formattedTotal}`;
 
-            // Menyalin teks belanjaan otomatis ke clipboard user agar gampang tinggal paste di form
+            // Salin daftar belanja ke clipboard agar aman cadangan
             navigator.clipboard.writeText(textDaftarBelanja).then(() => {
                 console.log("Daftar belanjaan berhasil disalin ke clipboard.");
             }).catch(err => {
                 console.error("Gagal menyalin otomatis: ", err);
             });
 
+            // Siapkan URL Google Form & simpan parameter URL WA ke global cache variabel
             const googleFormBaseUrl = "https://docs.google.com/forms/d/e/1FAIpQLScTvb6mu8UMKg7zSidM6mFSNx-mo8cya-Aw9mJnmQbun-69Ew/viewform?usp=pp_url&entry.89159163=";
             const formUrlFinal = googleFormBaseUrl + encodeURIComponent(textDaftarBelanja);
 
-            const pesanWA = encodeURIComponent(`Halo Admin Figurorama, saya ingin memesan item berikut melalui keranjang web:\n\n${textDaftarBelanja}\n\nSaya akan mengisi alamat di halaman form berikutnya.`);
-            const waUrlFinal = `https://wa.me/6281322555224?text=${pesanWA}`;
+            const pesanWA = encodeURIComponent(`Halo Admin Figurorama, saya ingin memesan item berikut melalui keranjang web:\n\n${textDaftarBelanja}\n\nSaya telah mengirim rincian alamat melalui Google Form.`);
+            cachedWhatsAppUrl = `https://wa.me/6281322555224?text=${pesanWA}`;
 
-            // 1. Buka Chat WhatsApp di tab baru agar tidak memutus sesi web utama
-            window.open(waUrlFinal, '_blank');
-            
-            // 2. Tutup Drawer Keranjang & Buka Google Form di dalam Modal internal
             // Ganti window state dari cart ke form modal
             if(window.history.state && window.history.state.type === 'cart') {
                 window.history.replaceState({ modalOpen: true, type: 'form' }, '', window.location.href);
             }
+            
+            // Buka Google Form terlebih dahulu, baru sembunyikan drawer keranjang belanjaan
             toggleCartDrawer(true);
             openFormModal(formUrlFinal);
-            
-            // Bersihkan keranjang belanja setelah checkout
-            cart = [];
-            updateCartUI();
+        }
+
+        // Fungsi baru untuk eksekusi WhatsApp manual setelah isi Form alamat selesai
+        function sendWhatsAppDirectly() {
+            if (cachedWhatsAppUrl !== "") {
+                window.open(cachedWhatsAppUrl, '_blank');
+                
+                // Setelah pembeli diarahkan ke WA, kita bisa bersihkan keranjang & tutup modal form secara bersih
+                cart = [];
+                updateCartUI();
+                closeFormModal();
+                cachedWhatsAppUrl = "";
+            } else {
+                alert("Keranjang belanjaan kosong atau tidak valid.");
+            }
         }
 
         function toggleDarkMode() {
@@ -751,7 +777,6 @@
         window.onclick = function(e) { 
             if(e.target === document.getElementById('product-modal')) closeModal(); 
             if(e.target === document.getElementById('faq-modal')) closeFaqModal();
-            if(e.target === document.getElementById('form-modal')) closeFormModal();
         }
         window.onload = fetchProducts;
     </script>
