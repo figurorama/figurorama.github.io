@@ -275,7 +275,6 @@
                     htmlHarga = `<span class="text-gray-700 dark:text-gray-200 font-extrabold text-sm sm:text-lg block">${formattedNormal}</span>`;
                 }
 
-                // MODIFIKASI 2: Mengoptimalkan padding (p-2.5 sm:p-4), teks (text-xs sm:text-base) agar pas & rapi saat dijejer 2 kolom di layar kecil smartphone
                 return `
                     <div onclick="openModalByName('${namaAman}')" class="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between cursor-pointer group">
                         <div>
@@ -337,6 +336,7 @@
             const hargaDiskonKey = keys.find(k => k.toLowerCase() === 'harga_diskon') || 'Harga_Diskon';
 
             const fotoArray = [p.Foto, p.Foto2, p.Foto3, p.Foto4, p.Foto5].filter(url => url && url.trim() !== "");
+            
             document.getElementById('modal-nama').innerText = p.Nama;
             document.getElementById('modal-kategori').innerText = p.Kategori || "General";
             
