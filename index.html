@@ -330,21 +330,25 @@
         }
 
         function openModalByName(namaProduk) {
-            const p = allProducts.find(item => item.Nama === namaProduk);
-            if (!p) return;
-            currentModalProduct = p;
+    const p = allProducts.find(item => item.Nama === namaProduk);
+    if (!p) return;
+    currentModalProduct = p;
 
-            const keys = Object.keys(p);
-            const hargaKey = keys.find(k => k.toLowerCase() === 'harga') || 'Harga';
-            const diskonKey = keys.find(k => k.toLowerCase() === 'diskon') || 'Diskon';
-            const hargaDiskonKey = keys.find(k => k.toLowerCase() === 'harga_diskon') || 'Harga_Diskon';
-            const deskripsiKey = keys.find(k => k.toLowerCase() === 'deskripsi') || 'Deskripsi';
+    const keys = Object.keys(p);
+    const hargaKey = keys.find(k => k.toLowerCase() === 'harga') || 'Harga';
+    const diskonKey = keys.find(k => k.toLowerCase() === 'diskon') || 'Diskon';
+    const hargaDiskonKey = keys.find(k => k.toLowerCase() === 'harga_diskon') || 'Harga_Diskon';
+    const deskripsiKey = keys.find(k => k.toLowerCase() === 'deskripsi') || 'Deskripsi';
 
-            const fotoArray = [p.Foto, p.Foto2, p.Foto3, p.Foto4, p.Foto5].filter(url => url && url.trim() !== "");
-            
-            document.getElementById('modal-nama').innerText = p.Nama;
-            document.getElementById('modal-kategori').innerText = p.Kategori || "General";
-            document.getElementById('modal-deskripsi').innerText = p[deskripsiKey] || "Tidak ada deskripsi tersedia.";
+    const fotoArray = [p.Foto, p.Foto2, p.Foto3, p.Foto4, p.Foto5].filter(url => url && url.trim() !== "");
+    
+    // Gunakan .innerText untuk data judul/nama yang memang hanya teks
+    document.getElementById('modal-nama').innerText = p.Nama;
+    document.getElementById('modal-kategori').innerText = p.Kategori || "General";
+    
+    // GANTI KE .innerHTML agar tag <p>, <br>, dll terbaca sebagai format
+    const deskripsiElement = document.getElementById('modal-deskripsi');
+    deskripsiElement.innerHTML = p[deskripsiKey] || "Tidak ada deskripsi tersedia.";
             
             const diskonValue = p[diskonKey] ? p[diskonKey].replace(/[^0-9]/g, '') : '';
             let hargaNormalMentah = p[hargaKey] ? p[hargaKey].replace(/[^0-9]/g, '') : '';
