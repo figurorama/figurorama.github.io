@@ -801,10 +801,11 @@
             const nama = document.getElementById('shipping-nama').value.trim();
             const hp = document.getElementById('shipping-hp').value.trim();
             const alamat = document.getElementById('shipping-alamat').value.trim();
+            const submitBtn = document.getElementById('shipping-submit-btn');
 
             if (!nama || !hp || !alamat) return alert("Mohon lengkapi Nama, WhatsApp, dan Alamat Anda!");
 
-            // Update informasi profil lokal di LocalStorage
+            // Update informasi profil lokal
             const savedMember = localStorage.getItem('figurorama_member');
             if (savedMember) {
                 let member = JSON.parse(savedMember);
@@ -813,25 +814,15 @@
                 member.alamat = alamat;
                 localStorage.setItem('figurorama_member', JSON.stringify(member));
 
-                // PERBAIKAN: Kirim data alamat ke Google Sheets secara background agar tersimpan permanen
+                // Kirim update data alamat terbaru ke Google Sheets via Apps Script background fetch
                 if (!appsScriptUrl.includes("SILAKAN_PASTE_URL")) {
                     fetch(appsScriptUrl, {
                         method: "POST",
-                        body: JSON.stringify({ 
-                            username: member.username, 
-                            hp: hp, 
-                            namaLengkap: nama, 
-                            alamat_lengkap: alamat 
-                        })
-                    })
-                    .then(res => res.json())
-                    .then(resData => {
-                        console.log("Database sync:", resData.message);
-                    })
-                    .catch(e => console.error("Background sync error:", e));
+                        body: JSON.stringify({ username: member.username, hp: hp, namaLengkap: nama, alamat_lengkap: alamat })
+                    }).catch(e => console.error("Background sync error:", e));
                 }
             } else {
-                // Jika user checkout tanpa login (sebagai guest)
+                // Jika user checkout tanpa login, data tetap diingat di LocalStorage perangkat ini sebagai Guest profil
                 const guestProfile = { username: nama, hp: hp, namaLengkap: nama, alamat: alamat, status: "guest" };
                 localStorage.setItem('figurorama_member', JSON.stringify(guestProfile));
                 checkSavedMemberSession();
@@ -843,7 +834,7 @@
             
             window.open(waUrlFinal, '_blank');
             
-            // Selesaikan transaksi di web
+            // Selesaikan transaksi
             closeFormModal();
             cart = [];
             updateCartUI();
