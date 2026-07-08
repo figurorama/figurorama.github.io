@@ -29,6 +29,15 @@
                 </div>
             </div>
             <div class="flex items-center justify-center sm:justify-end space-x-3 sm:space-x-4 w-full sm:w-auto">
+                <div id="user-status-area" class="text-xs font-medium hidden flex items-center space-x-1 bg-gray-50 dark:bg-gray-700/50 px-2.5 py-1.5 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <span class="text-gray-500 dark:text-gray-400">👋 Halo,</span>
+                    <span id="display-username" class="font-bold text-gray-800 dark:text-white"></span>
+                    <button onclick="logoutPelanggan()" class="ml-2 text-red-500 hover:text-red-600 font-bold hover:underline">Logout</button>
+                </div>
+                <button id="btn-login-header" onclick="openLoginModal()" class="text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl transition shadow-sm flex items-center gap-1">
+                    👤 Sign In / Up
+                </button>
+
                 <button onclick="openFaqModal()" class="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl transition border border-emerald-200 dark:border-emerald-800 flex items-center gap-1" title="Frequently Asked Questions">
                     ❓ FAQ
                 </button>
@@ -152,7 +161,7 @@
                 <div class="space-y-2">
                     <p class="font-extrabold text-emerald-700 dark:text-emerald-400 text-base">Q: Mengapa harga di Tokopedia berbeda (lebih mahal) daripada beli langsung via WhatsApp?</p>
                     <p class="pl-4 border-l-2 border-emerald-500/30 text-gray-600 dark:text-gray-300">
-                        Harga di Tokopedia disesuaikan karena adanya biaya layanan dan komisi marketplace. Untuk mendapatkan harga terbaik (lebih murah) dan pengiriman yang lebih praktis untuk banyak barang sekaligus, kami menyarankan Anda menggunakan fitur Keranjang Belanja dan bertransaksi langsung via WhatsApp.
+                        Harga di Tokopedia disesuaikan karena adanya biaya layanan dan komisi marketplace. Untuk mendapatkan harga terbaik (lebih murah) dan pengiriman yang lebih praktis untuk banyak barang sekaligus, kami menyarankan Anda menggunakan fitur Keranjang Belanja and bertransaksi langsung via WhatsApp.
                     </p>
                 </div>
 
@@ -218,6 +227,31 @@
         </div>
     </div>
 
+    <div id="login-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl relative border dark:border-gray-700 p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-2 dark:border-gray-700">
+                <h3 class="font-extrabold text-gray-800 dark:text-white text-base">👤 Akses Hubung Member</h3>
+                <button onclick="closeLoginModal()" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-300 font-bold h-7 w-7 rounded-full flex items-center justify-center transition">✕</button>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Username / ID Toko</label>
+                    <input type="text" id="login-username" placeholder="Contoh: didichung" class="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Nomor WhatsApp</label>
+                    <input type="tel" id="login-hp" placeholder="Contoh: 081322555224" class="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white">
+                </div>
+            </div>
+
+            <button onclick="prosesLoginAtauDaftar()" class="w-full py-3 font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition shadow-md text-sm">
+                Hubungkan Perangkat & Ambil Data ➔
+            </button>
+            <p class="text-[11px] text-gray-400 text-center leading-normal">Sistem akan mencocokkan ID & Nomor HP Anda dengan riwayat order data lama di spreadsheet secara aman.</p>
+        </div>
+    </div>
+
     <div id="form-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full h-[90vh] overflow-hidden shadow-2xl relative flex flex-col border dark:border-gray-700">
             <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900 rounded-t-2xl">
@@ -253,6 +287,10 @@
 
     <script>
         const csvUrl = "https://docs.google.com/spreadsheets/d/1AAu7tmbftfQ7C2mnqJMYCGJkj0Bqs3RWPzsTTn-sdoU/export?format=csv";
+        
+        // Taruh URL Aplikasi Web Apps Script Anda di sini!
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxz-Djmim-ddKca9PdJngd2ZedCT0vq1H4o4Vq_QmFQVmkmdCIoud44DreaZzVckTKV1A/exec"; 
+
         let allProducts = [];
         let filteredProducts = [];
         let currentCategory = 'all';
@@ -655,17 +693,27 @@
             const formattedTotal = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalHarga).replace(/\s?/g, '');
             textDaftarBelanja += `\nESTIMASI TOTAL: ${formattedTotal}`;
 
+            // Jika pelanggan sudah login, lampirkan identitas ke baris paling atas belanjaan
+            const savedUser = localStorage.getItem('fig_user');
+            const savedHp = localStorage.getItem('fig_hp');
+            let dataProfilPrefix = "";
+            if (savedUser && savedHp) {
+                dataProfilPrefix = `MEMBER ID: ${savedUser}\nWHATSAPP: ${savedHp}\n\n`;
+            }
+
+            const teksFormulirLengkap = dataProfilPrefix + textDaftarBelanja;
+
             // Menyalin teks belanjaan otomatis ke clipboard user agar gampang tinggal paste di form
-            navigator.clipboard.writeText(textDaftarBelanja).then(() => {
+            navigator.clipboard.writeText(teksFormulirLengkap).then(() => {
                 console.log("Daftar belanjaan berhasil disalin ke clipboard.");
             }).catch(err => {
                 console.error("Gagal menyalin otomatis: ", err);
             });
 
             const googleFormBaseUrl = "https://docs.google.com/forms/d/e/1FAIpQLScTvb6mu8UMKg7zSidM6mFSNx-mo8cya-Aw9mJnmQbun-69Ew/viewform?usp=pp_url&entry.89159163=";
-            const formUrlFinal = googleFormBaseUrl + encodeURIComponent(textDaftarBelanja);
+            const formUrlFinal = googleFormBaseUrl + encodeURIComponent(teksFormulirLengkap);
 
-            const pesanWA = encodeURIComponent(`Halo Admin Figurorama, saya ingin memesan item berikut melalui keranjang web:\n\n${textDaftarBelanja}\n\nSaya akan mengisi alamat di halaman form berikutnya.`);
+            const pesanWA = encodeURIComponent(`Halo Admin Figurorama, saya ingin memesan item berikut melalui keranjang web:\n\n${teksFormulirLengkap}\n\nSaya akan mengisi alamat di halaman form berikutnya.`);
             const waUrlFinal = `https://wa.me/6281322555224?text=${pesanWA}`;
 
             // 1. Buka Chat WhatsApp di tab baru agar tidak memutus sesi web utama
@@ -678,6 +726,58 @@
             // Bersihkan keranjang belanja setelah checkout
             cart = [];
             updateCartUI();
+        }
+
+        // --- MANIPULASI LOGIKA LOGIN / MEMBER PASSWORDLESS ---
+        function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
+        function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
+
+        async function prosesLoginAtauDaftar() {
+            const user = document.getElementById('login-username').value.trim();
+            const hp = document.getElementById('login-hp').value.trim();
+
+            if(!user || !hp) return alert("Mohon isi Username dan Nomor HP WhatsApp Anda!");
+
+            try {
+                // Mengirim data kecocokan ke Google Apps Script Web App secara terenkripsi background
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ nama: user, hp: hp })
+                });
+
+                // Kunci data dasar ke memori browser lokal perangkat baru
+                localStorage.setItem('fig_user', user);
+                localStorage.setItem('fig_hp', hp);
+                
+                alert("Identitas akun berhasil terhubung dengan perangkat ini!");
+                checkLoginStatus();
+                closeLoginModal();
+            } catch (error) {
+                console.error("Error Login:", error);
+                alert("Gagal melakukan verifikasi ke database.");
+            }
+        }
+
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('fig_user');
+            if (savedUser) {
+                document.getElementById('btn-login-header').classList.add('hidden');
+                document.getElementById('user-status-area').classList.remove('hidden');
+                document.getElementById('display-username').innerText = savedUser;
+            } else {
+                document.getElementById('btn-login-header').classList.remove('hidden');
+                document.getElementById('user-status-area').classList.add('hidden');
+            }
+        }
+
+        function logoutPelanggan() {
+            if(confirm("Apakah Anda ingin keluar dari akun member di perangkat ini?")) {
+                localStorage.removeItem('fig_user');
+                localStorage.removeItem('fig_hp');
+                checkLoginStatus();
+                alert("Berhasil keluar.");
+            }
         }
 
         function toggleDarkMode() {
@@ -700,8 +800,13 @@
             if(e.target === document.getElementById('product-modal')) closeModal(); 
             if(e.target === document.getElementById('faq-modal')) closeFaqModal();
             if(e.target === document.getElementById('form-modal')) closeFormModal();
+            if(e.target === document.getElementById('login-modal')) closeLoginModal();
         }
-        window.onload = fetchProducts;
+        
+        window.onload = function() {
+            fetchProducts();
+            checkLoginStatus();
+        };
     </script>
 </body>
 </html>
