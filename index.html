@@ -40,31 +40,25 @@
         </div>
     </header>
 
-    <section class="relative bg-cover bg-center py-16 px-4 text-center border-b border-gray-200 dark:border-gray-700 overflow-hidden" style="background-image: url('images/banner.jpeg');">
+    <section class="relative bg-cover bg-center py-24 px-4 text-center border-b border-gray-200 dark:border-gray-700 overflow-hidden" style="background-image: url('images/banner.jpeg');">
         <div class="absolute inset-0 bg-black/50"></div>
-        
-        <div class="relative max-w-3xl mx-auto z-10 text-white">
-            <h2 class="text-3xl md:text-4xl font-extrabold mb-3 drop-shadow-md">Welcome to Figurorama Online Store</h2>
-            <p class="text-gray-200 mb-4 max-w-xl mx-auto text-sm md:text-base drop-shadow">Tambahkan produk ke keranjang untuk melakukan *multiple order* sekaligus dengan mudah, aman, dan praktis.</p>
-        </div>
     </section>
 
     <main class="max-w-6xl mx-auto px-4 py-6 sm:py-12">
-        
-        <div class="flex flex-col md:flex-row gap-4 items-center justify-between mb-8 pb-6 border-b border-gray-100 dark:border-gray-800">
-            <div class="w-full md:max-w-xs relative">
-                <input type="text" id="search-input" oninput="handleSearch()" placeholder="Cari produk favorit Anda..." class="w-full px-5 py-2.5 rounded-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition placeholder-gray-400 text-sm">
-                <span class="absolute right-4 top-3 text-gray-400 text-sm">🔍</span>
+        <div class="max-w-3xl mx-auto mb-8 text-center space-y-4">
+            <div class="max-w-md mx-auto relative">
+                <input type="text" id="search-input" oninput="handleSearch()" placeholder="Cari produk favorit Anda..." class="w-full px-5 py-3 rounded-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition placeholder-gray-400">
+                <span class="absolute right-4 top-3.5 text-gray-400">🔍</span>
             </div>
 
-            <div class="flex flex-wrap justify-center md:justify-end gap-2" id="category-filters">
+            <div class="flex flex-wrap justify-center gap-2" id="category-filters">
                 <button data-cat="all" onclick="filterCategory('all')" class="px-4 py-2 rounded-full text-sm font-medium bg-emerald-600 border border-emerald-500 text-white shadow-md transition hover:bg-emerald-700">All Items</button>
                 <button data-cat="1/6 figures and parts" onclick="filterCategory('1/6 Figures and parts')" class="px-4 py-2 rounded-full text-sm font-medium bg-white/90 dark:bg-gray-800/90 shadow-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 transition">1/6 Figures & Parts</button>
                 <button data-cat="1/12 figures and parts" onclick="filterCategory('1/12 Figures and parts')" class="px-4 py-2 rounded-full text-sm font-medium bg-white/90 dark:bg-gray-800/90 shadow-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 transition">1/12 Figures & Parts</button>
                 <button data-cat="gunpla" onclick="filterCategory('Gunpla')" class="px-4 py-2 rounded-full text-sm font-medium bg-white/90 dark:bg-gray-800/90 shadow-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 transition">Gunpla</button>
                 <button data-cat="1/64th scale" onclick="filterCategory('1/64th scale')" class="px-4 py-2 rounded-full text-sm font-medium bg-white/90 dark:bg-gray-800/90 shadow-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 transition">1/64th Scale</button>
                 <button data-cat="others" onclick="filterCategory('others')" class="px-4 py-2 rounded-full text-sm font-medium bg-white/90 dark:bg-gray-800/90 shadow-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 transition">Others</button>
-                <button data-cat="habis" onclick="filterCategory('habis')" class="px-4 py-2 rounded-full text-sm font-medium bg-red-600/90 shadow-sm text-white hover:bg-red-700 border border-red-500 transition">📦 Habis</button>
+                <button data-cat="habis" onclick="filterCategory('habis')" class="px-4 py-2 rounded-full text-sm font-medium bg-red-600/90 shadow-sm text-white hover:bg-red-700 transition">📦 Habis</button>
             </div>
         </div>
 
