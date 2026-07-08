@@ -172,7 +172,13 @@
             
             // PEMBERSIH TOTAL: Membuang kata kunci transaksi dan nominal harga
             let rawProduk = decodeURIComponent(escape(atob(b64Produk)));
-            const produk = rawProduk.split(/\r?\n/).map(l=>l.replace(/\s*-\s*Rp\.?\s*[\d\.,]+.*$/i,'').trim()).filter(l=>l).join('\n');
+            const produk = rawProduk
+                .replace(/(subtotal|total|estimasi|harga|ongkir|biaya)\s*:?\s*[\d\.,\s]*/gi, '') // Hapus kata kunci & nominal
+                .replace(/(Rp\.?\s?\d+[\d\.,]*|[\d\.,]+\s?(rb|k|juta))/gi, '') // Hapus sisa nominal harga
+                .replace(/[\(\[\{].*?[\)\]\}]/g, '') // Hapus konten dalam kurung
+                .replace(/[=-]{2,}/g, '') // Hapus garis-garis pemisah
+                .replace(/\s+/g, ' ') // Rapikan spasi ganda
+                .trim();
 
             document.getElementById('lbl-penerima').innerText = nama;
             document.getElementById('lbl-alamat').innerText = alamat;
