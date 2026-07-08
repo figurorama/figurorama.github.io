@@ -20,23 +20,23 @@
 <body class="relative min-h-screen pb-24 dark:bg-gray-900 dark:text-gray-100">
 
     <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40 transition-colors duration-300">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+            <div class="flex items-center space-x-3 w-full sm:w-auto justify-center sm:justify-start">
                 <img src="logo.jpg" alt="Figurorama Logo" class="h-12 w-12 object-cover rounded-full border border-gray-200 dark:border-gray-700" onerror="this.src='https://via.placeholder.com/50?text=F'">
                 <div>
                     <h1 class="font-bold text-xl tracking-wide text-gray-800 dark:text-white">FIGURORAMA</h1>
                     <p class="text-xs text-gray-500 dark:text-gray-400">Action Figures & Collectibles Catalog</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-4">
-                <button onclick="openFaqModal()" class="text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 px-3 py-2 rounded-xl transition border border-emerald-200 dark:border-emerald-800 flex items-center gap-1" title="Frequently Asked Questions">
+            <div class="flex items-center justify-center sm:justify-end space-x-3 sm:space-x-4 w-full sm:w-auto">
+                <button onclick="openFaqModal()" class="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl transition border border-emerald-200 dark:border-emerald-800 flex items-center gap-1" title="Frequently Asked Questions">
                     ❓ FAQ
                 </button>
-                <button onclick="toggleDarkMode()" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-lg" title="Toggle Dark Mode">
+                <button onclick="toggleDarkMode()" class="p-1.5 sm:p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-base sm:text-lg" title="Toggle Dark Mode">
                     <span class="block dark:hidden">🌙</span>
                     <span class="hidden dark:block">☀️</span>
                 </button>
-                <a href="https://www.tokopedia.com/figurorama" target="_blank" class="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+                <a href="https://www.tokopedia.com/figurorama" target="_blank" class="text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
                     Visit Tokopedia ↗
                 </a>
             </div>
