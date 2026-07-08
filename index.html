@@ -734,48 +734,27 @@
 
         // --- PROSES INTEGRASI FORM MANDIRI KE GOOGLE SHEETS, LOCALSTORAGE, & WHATSAPP ---
         async function handleFormSubmit(event) {
-            event.preventDefault();
+    event.preventDefault();
 
-            const namaPembeli = document.getElementById('form-nama').value.trim();
-            const hpPembeli = document.getElementById('form-hp').value.trim();
-            const alamatPembeli = document.getElementById('form-alamat').value.trim();
+    const namaPembeli = document.getElementById('form-nama').value.trim();
+    const hpPembeli = document.getElementById('form-hp').value.trim();
+    const alamatPembeli = document.getElementById('form-alamat').value.trim();
 
-            // SIMPAN DATA MEMBER DI LOKAL BROWSER PEMBELI
-            localStorage.setItem('member_nama', namaPembeli);
-            localStorage.setItem('member_hp', hpPembeli);
-            localStorage.setItem('member_alamat', alamatPembeli);
+    // 1. SIMPAN DATA MEMBER DI LOKAL BROWSER PEMBELI
+    localStorage.setItem('member_nama', namaPembeli);
+    localStorage.setItem('member_hp', hpPembeli);
+    localStorage.setItem('member_alamat', alamatPembeli);
 
-            // Perbarui sapaan header secara langsung tanpa reload halaman
-            const welcomeElement = document.getElementById('welcome-member');
-            if (welcomeElement) {
-                welcomeElement.innerHTML = `👋 Halo, <span class="font-bold text-emerald-600 dark:text-emerald-400">${namaPembeli}</span> (Member Toko)`;
-            }
+    // Perbarui sapaan header secara langsung
+    const welcomeElement = document.getElementById('welcome-member');
+    if (welcomeElement) {
+        welcomeElement.innerHTML = `👋 Halo, <span class="font-bold text-emerald-600 dark:text-emerald-400">${namaPembeli}</span> (Member Toko)`;
+    }
 
-            const googleSheetsWebAppUrl = "https://script.google.com/macros/s/AKfycbzHuxISNMQCdAmlE0Q5XB5eBGlfXoW4vqETpGIMqRn8zUf4ebSLhjNFnw8SMmp0rmHMrQ/exec";
+    const googleSheetsWebAppUrl = "https://script.google.com/macros/s/AKfycbzHuxISNMQCdAmlE0Q5XB5eBGlfXoW4vqETpGIMqRn8zUf4ebSLhjNFnw8SMmp0rmHMrQ/exec";
 
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = "⏳ Menyimpan data & Menghubungkan ke WA...";
-
-            try {
-                await fetch(googleSheetsWebAppUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        nama: namaPembeli,
-                        hp: hpPembeli,
-                        alamat: alamatPembeli,
-                        belanjaan: globalTextDaftarBelanja
-                    })
-                });
-                console.log("Data berhasil dikirim ke Google Sheets.");
-            } catch (error) {
-                console.error("Gagal mengirim ke Google Sheets:", error);
-            }
-
-            const templatePesanWA = `Halo Admin Figurorama, saya ingin memesan item berikut:
+    // 2. SIAPKAN TEMPLATE PESAN WHATSAPP
+    const templatePesanWA = `Halo Admin Figurorama, saya ingin memesan item berikut:
 
 ${globalTextDaftarBelanja}
 
@@ -788,18 +767,30 @@ ${globalTextDaftarBelanja}
 
 Mohon dihitung total ongkirnya ya Admin, terima kasih!`;
 
-            const finalWaUrl = `https://wa.me/6281322555224?text=${encodeURIComponent(templatePesanWA)}`;
-            
-            window.open(finalWaUrl, '_blank');
+    const finalWaUrl = `https://wa.me/6281322555224?text=${encodeURIComponent(templatePesanWA)}`;
+    
+    // 3. LANGSUNG BUKA WHATSAPP (INSTANT/TANPA MENUNGGU GOOGLE SHEETS)
+    window.open(finalWaUrl, '_blank');
 
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
+    // 4. KIRIM KE GOOGLE SHEETS DI LATAR BELAKANG (TIDAK MEMBLOKIR ALUR)
+    fetch(googleSheetsWebAppUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            nama: namaPembeli,
+            hp: hpPembeli,
+            alamat: alamatPembeli,
+            belanjaan: globalTextDaftarBelanja
+        })
+    }).catch(error => console.error("Gagal mengirim ke Google Sheets di background:", error));
 
-            cart = [];
-            globalTextDaftarBelanja = "";
-            updateCartUI();
-            closeFormModal();
-        }
+    // 5. BERSIHKAN KERANJANG DAN MODAL SECARA INSTAN
+    cart = [];
+    globalTextDaftarBelanja = "";
+    updateCartUI();
+    closeFormModal();
+}
 
         function toggleDarkMode() {
             if (document.documentElement.classList.contains('dark')) {
