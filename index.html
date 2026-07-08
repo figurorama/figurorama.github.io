@@ -29,6 +29,9 @@
                 </div>
             </div>
             <div class="flex items-center space-x-4">
+                <button onclick="openFaqModal()" class="text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 px-3 py-2 rounded-xl transition border border-emerald-200 dark:border-emerald-800 flex items-center gap-1" title="Frequently Asked Questions">
+                    ❓ FAQ
+                </button>
                 <button onclick="toggleDarkMode()" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-lg" title="Toggle Dark Mode">
                     <span class="block dark:hidden">🌙</span>
                     <span class="hidden dark:block">☀️</span>
@@ -107,6 +110,79 @@
                         🛍️ Beli Lewat Tokopedia
                     </a>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="faq-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl relative p-6 sm:p-8 border dark:border-gray-700">
+            <button onclick="closeFaqModal()" class="absolute top-4 right-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold h-8 w-8 rounded-full flex items-center justify-center transition">✕</button>
+            
+            <h2 class="text-xl sm:text-2xl font-black text-gray-800 dark:text-white mb-6 tracking-wide border-b pb-3 dark:border-gray-700 flex items-center gap-2">
+                📢 FREQUENTLY ASKED QUESTIONS
+            </h2>
+            
+            <div class="space-y-6 text-sm sm:text-base leading-relaxed text-gray-700 dark:text-gray-300">
+                <div class="space-y-2">
+                    <p class="font-extrabold text-emerald-700 dark:text-emerald-400 text-base">Q: Bagaimana cara bertransaksi di website ini?</p>
+                    <div class="pl-4 border-l-2 border-emerald-500/30 space-y-3 text-gray-600 dark:text-gray-300">
+                        <p>Anda bisa memilih produk yang diinginkan, lalu menentukan metode transaksi yang paling nyaman:</p>
+                        <ol class="list-decimal pl-4 space-y-2">
+                            <li><strong class="font-bold text-gray-800 dark:text-white">Lewat Tokopedia:</strong> Klik tombol <em>"Beli Lewat Tokopedia"</em> pada detail produk (catatan: harga mungkin sedikit berbeda karena biaya layanan platform).</li>
+                            <li>
+                                <strong class="font-bold text-gray-800 dark:text-white">Lewat WhatsApp (Multiple Order / Lebih Praktis):</strong>
+                                <ul class="list-disc pl-4 mt-1 space-y-1">
+                                    <li>Klik <em>"Tambah ke Keranjang Belanja"</em> pada produk-produk yang ingin Anda beli.</li>
+                                    <li>Setelah selesai memilih, buka keranjang dan klik tombol <strong class="font-bold">"Lanjut Isi Form & Kirim ke WA"</strong>.</li>
+                                    <li>Anda akan diarahkan untuk mengirim detail pesanan ke WhatsApp Admin dan mengisi formulir alamat.</li>
+                                    <li>Lakukan transfer pembayaran ke <strong class="font-bold text-gray-800 dark:text-white">Rekening BCA 0095584654 a.n. Tjoeng Tjondro Kurniadi</strong>.</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <hr class="border-gray-100 dark:border-gray-700" />
+
+                <div class="space-y-2">
+                    <p class="font-extrabold text-emerald-700 dark:text-emerald-400 text-base">Q: Mengapa harga di Tokopedia berbeda (lebih mahal) daripada beli langsung via WhatsApp?</p>
+                    <p class="pl-4 border-l-2 border-emerald-500/30 text-gray-600 dark:text-gray-300">
+                        Harga di Tokopedia disesuaikan karena adanya biaya layanan dan komisi marketplace. Untuk mendapatkan harga terbaik (lebih murah) dan pengiriman yang lebih praktis untuk banyak barang sekaligus, kami menyarankan Anda menggunakan fitur Keranjang Belanja dan bertransaksi langsung via WhatsApp.
+                    </p>
+                </div>
+
+                <hr class="border-gray-100 dark:border-gray-700" />
+
+                <div class="space-y-2">
+                    <p class="font-extrabold text-emerald-700 dark:text-emerald-400 text-base">Q: Bagaimana dengan keamanan pengiriman barang? Apakah packing-nya aman?</p>
+                    <p class="pl-4 border-l-2 border-emerald-500/30 text-gray-600 dark:text-gray-300">
+                        Kami sangat memahami bahwa kondisi boks dan figur sangat berharga bagi kolektor. Setiap pengiriman pesanan langsung (via WA) maupun Tokopedia akan dilapisi dengan <em>bubble wrap</em> tebal dan kardus tambahan secara <strong class="font-bold text-emerald-600 dark:text-emerald-400">gratis</strong> tanpa biaya tambahan untuk menjamin barang aman sampai di tujuan.
+                    </p>
+                </div>
+
+                <hr class="border-gray-100 dark:border-gray-700" />
+
+                <div class="space-y-2">
+                    <p class="font-extrabold text-emerald-700 dark:text-emerald-400 text-base">Q: Setelah melakukan transfer ke rekening BCA, bagaimana saya melakukan konfirmasi?</p>
+                    <p class="pl-4 border-l-2 border-emerald-500/30 text-gray-600 dark:text-gray-300">
+                        Cukup kirimkan foto atau tangkapan layar (<em>screenshot</em>) bukti transfer Anda ke nomor WhatsApp Admin kami. Pesanan Anda akan langsung diproses untuk pengiriman setelah dana masuk. Bukti pengiriman (resi) akan diberikan kepada pembeli.
+                    </p>
+                </div>
+
+                <hr class="border-gray-100 dark:border-gray-700" />
+
+                <div class="space-y-2">
+                    <p class="font-extrabold text-emerald-700 dark:text-emerald-400 text-base">Q: Kapan jadwal pengiriman barang dilakukan?</p>
+                    <p class="pl-4 border-l-2 border-emerald-500/30 text-gray-600 dark:text-gray-300">
+                        Pengiriman dilakukan setiap hari Senin - Sabtu. Pesanan yang pembayarannya dikonfirmasi sebelum jam <strong class="font-bold">15.00 WIB</strong> akan dikirim di hari yang sama. Pesanan pada hari Minggu atau hari libur nasional akan dikirim pada hari kerja berikutnya.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mt-8 pt-4 border-t dark:border-gray-700 text-center">
+                <button onclick="closeFaqModal()" class="px-6 py-2.5 font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition shadow-md text-sm">
+                    Selesai Membaca
+                </button>
             </div>
         </div>
     </div>
@@ -403,6 +479,9 @@
         function changeModalImage(url) { document.getElementById('modal-main-img').src = url; }
         function closeModal() { document.getElementById('product-modal').classList.add('hidden'); }
 
+        function openFaqModal() { document.getElementById('faq-modal').classList.remove('hidden'); }
+        function closeFaqModal() { document.getElementById('faq-modal').classList.add('hidden'); }
+
         function toggleCartDrawer() {
             const drawer = document.getElementById('cart-drawer');
             drawer.classList.toggle('translate-x-full');
@@ -524,7 +603,10 @@
             document.documentElement.classList.remove('dark');
         }
 
-        window.onclick = function(e) { if(e.target === document.getElementById('product-modal')) closeModal(); }
+        window.onclick = function(e) { 
+            if(e.target === document.getElementById('product-modal')) closeModal(); 
+            if(e.target === document.getElementById('faq-modal')) closeFaqModal();
+        }
         window.onload = fetchProducts;
     </script>
 </body>
