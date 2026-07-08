@@ -245,6 +245,9 @@
         let currentModalProduct = null;
         const itemsPerPage = 40;
         let currentPage = 1;
+        
+        // Flag internal untuk membedakan tutup modal via tombol back vs tombol silang
+        let isModalChangingInternal = false;
 
         async function fetchProducts() {
             try {
@@ -254,12 +257,8 @@
                 allProducts = parseCSV(data);
                 applyFilterAndSearch();
                 
-                // Fitur Deteksi Deep Link Produk saat reload/buka pertama kali
-                const urlParams = new URLSearchParams(window.location.search);
-                const productParam = urlParams.get('produk');
-                if (productParam) {
-                    openModalByName(productParam);
-                }
+                // Cek deep-link produk saat pertama load halaman
+                handleUrlParams();
             } catch (error) {
                 console.error("Error:", error);
                 document.getElementById('product-grid').innerHTML = '<p class="text-center col-span-full text-red-500 py-12">Gagal memuat katalog produk.</p>';
@@ -416,14 +415,18 @@
             document.getElementById('category-filters').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function openModalByName(namaProduk) {
+        function openModalByName(namaProduk, isFromPopstate = false) {
             const p = allProducts.find(item => item.Nama === namaProduk);
             if (!p) return;
             currentModalProduct = p;
 
-            // Fitur Push URL state saat barang dibuka
-            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?produk=' + encodeURIComponent(namaProduk);
-            window.history.pushState({ path: newUrl }, '', newUrl);
+            // Jika dipicu dari tombol klik normal, kita manipulasi history browser-nya
+            if (!isFromPopstate) {
+                isModalChangingInternal = true;
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?produk=' + encodeURIComponent(namaProduk);
+                window.history.pushState({ modalOpen: true, product: namaProduk }, '', newUrl);
+                isModalChangingInternal = false;
+            }
 
             const keys = Object.keys(p);
             const hargaKey = keys.find(k => k.toLowerCase() === 'harga') || 'Harga';
@@ -494,12 +497,41 @@
 
         function changeModalImage(url) { document.getElementById('modal-main-img').src = url; }
         
-        function closeModal() { 
+        function closeModal(isFromPopstate = false) { 
             document.getElementById('product-modal').classList.add('hidden');
-            // Kembalikan URL bersih tanpa parameter ketika modal ditutup
-            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-            window.history.pushState({ path: cleanUrl }, '', cleanUrl);
+            currentModalProduct = null;
+            
+            // Jika ditutup manual via silang (bukan back gesture), kita mundurkan history-nya
+            if (!isFromPopstate) {
+                isModalChangingInternal = true;
+                window.history.back();
+                isModalChangingInternal = false;
+            }
         }
+
+        function handleUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productParam = urlParams.get('produk');
+            if (productParam) {
+                openModalByName(productParam, true);
+            }
+        }
+
+        // --- SISTEM DETEKSI TOMBOL BACK HP / GESTURE ---
+        window.addEventListener('popstate', function(event) {
+            if (isModalChangingInternal) return; // Hiraukan jika perubahan dipicu internal kodingan kita
+
+            const modalElement = document.getElementById('product-modal');
+            const isModalVisible = !modalElement.classList.contains('hidden');
+
+            if (isModalVisible) {
+                // Skenario 1: Modal sedang terbuka, lalu user klik back/gesture HP
+                closeModal(true); 
+            } else if (event.state && event.state.modalOpen && event.state.product) {
+                // Skenario 2: User klik forward atau riwayat mengembalikan ke kondisi barang terbuka
+                openModalByName(event.state.product, true);
+            }
+        });
 
         function copyProductLink() {
             if (!currentModalProduct) return;
