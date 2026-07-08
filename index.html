@@ -798,47 +798,46 @@
         }
 
         function submitShippingOrder() {
+            const username = document.getElementById('shipping-username').value.trim().toLowerCase();
             const nama = document.getElementById('shipping-nama').value.trim();
             const hp = document.getElementById('shipping-hp').value.trim();
             const alamat = document.getElementById('shipping-alamat').value.trim();
-            const submitBtn = document.getElementById('shipping-submit-btn');
 
-            if (!nama || !hp || !alamat) return alert("Mohon lengkapi Nama, WhatsApp, dan Alamat Anda!");
+            if (!username || !nama || !hp || !alamat) return alert("Mohon lengkapi seluruh formulir data!");
 
-            // Update informasi profil lokal
-            const savedMember = localStorage.getItem('figurorama_member');
-            if (savedMember) {
-                let member = JSON.parse(savedMember);
-                member.namaLengkap = nama;
-                member.hp = hp;
-                member.alamat = alamat;
-                localStorage.setItem('figurorama_member', JSON.stringify(member));
+            // Simpan sesi lokal
+            let currentSession = { username: username, hp: hp, namaLengkap: nama, alamat: alamat };
+            localStorage.setItem('figurorama_member', JSON.stringify(currentSession));
+            checkSavedMemberSession();
 
-                // Kirim update data alamat terbaru ke Google Sheets via Apps Script background fetch
-                if (!appsScriptUrl.includes("SILAKAN_PASTE_URL")) {
-                    fetch(appsScriptUrl, {
-                        method: "POST",
-                        body: JSON.stringify({ username: member.username, hp: hp, namaLengkap: nama, alamat_lengkap: alamat })
-                    }).catch(e => console.error("Background sync error:", e));
-                }
-            } else {
-                // Jika user checkout tanpa login, data tetap diingat di LocalStorage perangkat ini sebagai Guest profil
-                const guestProfile = { username: nama, hp: hp, namaLengkap: nama, alamat: alamat, status: "guest" };
-                localStorage.setItem('figurorama_member', JSON.stringify(guestProfile));
-                checkSavedMemberSession();
+            // SEKARANG DATA PESANAN UTUH IKUT DIKIRIM KE APPS SCRIPT
+            if (appsScriptUrl !== "https://script.google.com/macros/s/AKfycbyDrSBmS3TgnI72c-egAz8E0pO3CsBUkVMAxWr0gaL0lI_5ONjo1Uur3mWB71GbD7wjJw/exec") {
+                fetch(appsScriptUrl, {
+                    method: "POST",
+                    body: JSON.stringify({ 
+                        username: username, 
+                        hp: hp, 
+                        namaLengkap: nama, 
+                        alamat_lengkap: alamat,
+                        daftar_belanja: currentDaftarBelanjaText, // Data barang belanjaan masuk ke sini!
+                        total_harga: document.getElementById('cart-total-price').innerText
+                    })
+                })
+                .then(res => res.json())
+                .then(resData => console.log("Database Sync:", resData.message))
+                .catch(e => console.error("Database Error:", e));
             }
 
-            // Membuka Tab Obrolan Pesanan Resmi ke WhatsApp Admin
+            // Jalankan alur WhatsApp Admin
             const textWhatsAppFinal = `Halo Admin Figurorama, saya ingin melakukan pemesanan:\n\n${currentDaftarBelanjaText}\n\n📍 DETAIL PENGIRIMAN:\n• Nama: ${nama}\n• WhatsApp: ${hp}\n• Alamat: ${alamat}`;
             const waUrlFinal = `https://wa.me/6281322555224?text=${encodeURIComponent(textWhatsAppFinal)}`;
             
             window.open(waUrlFinal, '_blank');
             
-            // Selesaikan transaksi
             closeFormModal();
             cart = [];
             updateCartUI();
-            alert("Pesanan Anda telah diteruskan ke WhatsApp Admin!");
+            alert("Pesanan sukses diteruskan ke WhatsApp dan data pesanan Anda telah dicatat di Antrean!");
         }
 
         function toggleDarkMode() {
