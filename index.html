@@ -192,7 +192,7 @@
         </div>
     </div>
 
-    <div id="floating-cart" onclick="openCartDrawer()" class="fixed bottom-6 right-6 bg-emerald-600 text-white p-4 rounded-full shadow-xl cursor-pointer hover:bg-emerald-700 transition transform hover:scale-105 z-40 flex items-center space-x-2">
+    <div id="floating-cart" onclick="toggleCartDrawer()" class="fixed bottom-6 right-6 bg-emerald-600 text-white p-4 rounded-full shadow-xl cursor-pointer hover:bg-emerald-700 transition transform hover:scale-105 z-40 flex items-center space-x-2">
         <span class="text-xl">🛒</span>
         <span id="cart-count" class="bg-white text-emerald-700 font-black text-xs px-2 py-1 rounded-full">0</span>
     </div>
@@ -201,7 +201,7 @@
         <div class="p-6 overflow-y-auto flex-1">
             <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-4 mb-4">
                 <h3 class="font-extrabold text-lg text-gray-800 dark:text-white flex items-center gap-2">🛒 Keranjang Belanja Anda</h3>
-                <button onclick="closeCartDrawer()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold text-lg">✕</button>
+                <button onclick="toggleCartDrawer()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold text-lg">✕</button>
             </div>
             <div id="cart-items-list" class="space-y-4">
                 <p class="text-center text-gray-400 py-8 text-sm">Keranjang belanja Anda masih kosong.</p>
@@ -302,11 +302,8 @@
             if (currentCategory === 'habis') {
                 baseProducts = allProducts.filter(p => p.Status && p.Status.trim().toLowerCase() === 'kosong');
             } else if (currentCategory === 'all') {
-                // MODIFIKASI: Mengecualikan status 'kosong' DAN kategori 'others' dari tampilan awal "All Items"
-                baseProducts = allProducts.filter(p => 
-                    (!p.Status || p.Status.trim().toLowerCase() !== 'kosong') && 
-                    (!p.Kategori || p.Kategori.trim().toLowerCase() !== 'others')
-                );
+                // Menyaring agar kategori 'others' tidak tertampil di 'All Items'
+                baseProducts = allProducts.filter(p => (!p.Status || p.Status.trim().toLowerCase() !== 'kosong') && (!p.Kategori || p.Kategori.trim().toLowerCase() !== 'others'));
             } else {
                 baseProducts = allProducts.filter(p => p.Kategori && p.Kategori.trim().toLowerCase() === currentCategory && (!p.Status || p.Status.trim().toLowerCase() !== 'kosong'));
             }
@@ -439,7 +436,7 @@
             if (!isFromPopstate) {
                 isModalChangingInternal = true;
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?produk=' + encodeURIComponent(namaProduk);
-                window.history.pushState({ view: 'product', product: namaProduk }, '', newUrl);
+                window.history.pushState({ modalOpen: true, type: 'product', product: namaProduk }, '', newUrl);
                 isModalChangingInternal = false;
             }
 
@@ -531,41 +528,31 @@
             }
         }
 
-        // MODIFIKASI GLOBAL: Pengaturan navigasi tombol back/popstate internal terpusat
         window.addEventListener('popstate', function(event) {
             if (isModalChangingInternal) return;
 
-            // 1. Cek & tutup modal produk
-            const modalProduct = document.getElementById('product-modal');
-            if (!modalProduct.classList.contains('hidden')) {
+            // Logika penutupan dinamis untuk semua tipe modal/drawer saat aksi back di browser
+            const productModal = document.getElementById('product-modal');
+            const faqModal = document.getElementById('faq-modal');
+            const cartDrawer = document.getElementById('cart-drawer');
+            const formModal = document.getElementById('form-modal');
+
+            if (!productModal.classList.contains('hidden')) {
                 closeModal(true);
-                return;
-            }
-
-            // 2. Cek & tutup modal FAQ
-            const modalFaq = document.getElementById('faq-modal');
-            if (!modalFaq.classList.contains('hidden')) {
+            } else if (!faqModal.classList.contains('hidden')) {
                 closeFaqModal(true);
-                return;
-            }
-
-            // 3. Cek & tutup drawer keranjang belanja
-            const drawerCart = document.getElementById('cart-drawer');
-            if (!drawerCart.classList.contains('translate-x-full')) {
-                closeCartDrawer(true);
-                return;
-            }
-
-            // 4. Cek & tutup modal form pengiriman alamat
-            const modalForm = document.getElementById('form-modal');
-            if (!modalForm.classList.contains('hidden')) {
+            } else if (!cartDrawer.classList.contains('translate-x-full')) {
+                toggleCartDrawer(true);
+            } else if (!formModal.classList.contains('hidden')) {
                 closeFormModal(true);
-                return;
-            }
-
-            // Jika state diarahkan untuk membuka produk tertentu secara deep link
-            if (event.state && event.state.view === 'product' && event.state.product) {
-                openModalByName(event.state.product, true);
+            } else if (event.state && event.state.modalOpen) {
+                if (event.state.type === 'product' && event.state.product) {
+                    openModalByName(event.state.product, true);
+                } else if (event.state.type === 'faq') {
+                    openFaqModal(true);
+                } else if (event.state.type === 'cart') {
+                    toggleCartDrawer(true);
+                }
             }
         });
 
@@ -579,15 +566,15 @@
             });
         }
 
-        // MODIFIKASI: Implementasi pushState pada Modal FAQ
         function openFaqModal(isFromPopstate = false) { 
             document.getElementById('faq-modal').classList.remove('hidden'); 
             if (!isFromPopstate) {
                 isModalChangingInternal = true;
-                window.history.pushState({ view: 'faq' }, '', window.location.pathname + window.location.search);
+                window.history.pushState({ modalOpen: true, type: 'faq' }, '', window.location.href);
                 isModalChangingInternal = false;
             }
         }
+        
         function closeFaqModal(isFromPopstate = false) { 
             document.getElementById('faq-modal').classList.add('hidden'); 
             if (!isFromPopstate) {
@@ -598,50 +585,34 @@
         }
 
         // --- MANIPULASI MODAL GOOGLE FORM ---
-        function openFormModal(finalFormUrl, isFromPopstate = false) {
+        function openFormModal(finalFormUrl) {
             document.getElementById('google-form-iframe').src = finalFormUrl;
             document.getElementById('form-modal').classList.remove('hidden');
-            if (!isFromPopstate) {
-                isModalChangingInternal = true;
-                window.history.pushState({ view: 'form' }, '', window.location.pathname + window.location.search);
-                isModalChangingInternal = false;
-            }
         }
         function closeFormModal(isFromPopstate = false) {
             document.getElementById('form-modal').classList.add('hidden');
             document.getElementById('google-form-iframe').src = "";
-            if (!isFromPopstate) {
+            if (!isFromPopstate && window.history.state && window.history.state.type === 'form') {
                 isModalChangingInternal = true;
                 window.history.back();
                 isModalChangingInternal = false;
             }
         }
 
-        // MODIFIKASI: Pembagian modul fungsi Cart Drawer & Implementasi pushState internal
-        function openCartDrawer(isFromPopstate = false) {
+        function toggleCartDrawer(isFromPopstate = false) {
             const drawer = document.getElementById('cart-drawer');
-            drawer.classList.remove('translate-x-full');
+            const isClosing = !drawer.classList.contains('translate-x-full');
+            
+            drawer.classList.toggle('translate-x-full');
+            
             if (!isFromPopstate) {
                 isModalChangingInternal = true;
-                window.history.pushState({ view: 'cart' }, '', window.location.pathname + window.location.search);
+                if (isClosing) {
+                    window.history.back();
+                } else {
+                    window.history.pushState({ modalOpen: true, type: 'cart' }, '', window.location.href);
+                }
                 isModalChangingInternal = false;
-            }
-        }
-        function closeCartDrawer(isFromPopstate = false) {
-            const drawer = document.getElementById('cart-drawer');
-            drawer.classList.add('translate-x-full');
-            if (!isFromPopstate) {
-                isModalChangingInternal = true;
-                window.history.back();
-                isModalChangingInternal = false;
-            }
-        }
-        function toggleCartDrawer() {
-            const drawer = document.getElementById('cart-drawer');
-            if (drawer.classList.contains('translate-x-full')) {
-                openCartDrawer();
-            } else {
-                closeCartDrawer();
             }
         }
 
@@ -671,7 +642,7 @@
             }
             updateCartUI();
             closeModal();
-            openCartDrawer(); // Otomatis membuka drawer setelah menambahkan item
+            toggleCartDrawer();
         }
 
         function updateQty(index, delta) {
@@ -732,6 +703,7 @@
             const formattedTotal = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalHarga).replace(/\s?/g, '');
             textDaftarBelanja += `\nESTIMASI TOTAL: ${formattedTotal}`;
 
+            // Menyalin teks belanjaan otomatis ke clipboard user agar gampang tinggal paste di form
             navigator.clipboard.writeText(textDaftarBelanja).then(() => {
                 console.log("Daftar belanjaan berhasil disalin ke clipboard.");
             }).catch(err => {
@@ -744,11 +716,18 @@
             const pesanWA = encodeURIComponent(`Halo Admin Figurorama, saya ingin memesan item berikut melalui keranjang web:\n\n${textDaftarBelanja}\n\nSaya akan mengisi alamat di halaman form berikutnya.`);
             const waUrlFinal = `https://wa.me/6281322555224?text=${pesanWA}`;
 
+            // 1. Buka Chat WhatsApp di tab baru agar tidak memutus sesi web utama
             window.open(waUrlFinal, '_blank');
             
-            closeCartDrawer(true); // Tutup drawer tanpa trigger history back ganda
+            // 2. Tutup Drawer Keranjang & Buka Google Form di dalam Modal internal
+            // Ganti window state dari cart ke form modal
+            if(window.history.state && window.history.state.type === 'cart') {
+                window.history.replaceState({ modalOpen: true, type: 'form' }, '', window.location.href);
+            }
+            toggleCartDrawer(true);
             openFormModal(formUrlFinal);
             
+            // Bersihkan keranjang belanja setelah checkout
             cart = [];
             updateCartUI();
         }
