@@ -679,16 +679,43 @@
             openFormModal(); // Buka form data pengiriman custom
         }
 
-        // --- PROSES INTEGRASI FORM MANDIRI KE WHATSAPP SECARA 100% OTOMATIS ---
-        function handleFormSubmit(event) {
-            event.preventDefault(); // Mencegah reload halaman web
+        // --- PROSES INTEGRASI FORM MANDIRI KE GOOGLE SHEETS & WHATSAPP ---
+async function handleFormSubmit(event) {
+    event.preventDefault(); // Mencegah reload halaman web
 
-            const namaPembeli = document.getElementById('form-nama').value.trim();
-            const hpPembeli = document.getElementById('form-hp').value.trim();
-            const alamatPembeli = document.getElementById('form-alamat').value.trim();
+    const namaPembeli = document.getElementById('form-nama').value.trim();
+    const hpPembeli = document.getElementById('form-hp').value.trim();
+    const alamatPembeli = document.getElementById('form-alamat').value.trim();
 
-            // Menyusun format chat teks WhatsApp super lengkap
-            const templatePesanWA = `Halo Admin Figurorama, saya ingin memesan item berikut:
+    // 1. GANTI URL DI BAWAH INI DENGAN WEB APP URL YANG ANDA SALIN DARI LANGKAH 1
+    const googleSheetsWebAppUrl = "https://script.google.com/macros/s/AKfycbzHuxISNMQCdAmlE0Q5XB5eBGlfXoW4vqETpGIMqRn8zUf4ebSLhjNFnw8SMmp0rmHMrQ/exec";
+
+    // Mengubah tombol menjadi loading saat mengirim data ke Google Sheets
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "⏳ Menyimpan data & Menghubungkan ke WA...";
+
+    try {
+        // Kirim data ke Google Sheets secara background (Asynchronous)
+        await fetch(googleSheetsWebAppUrl, {
+            method: 'POST',
+            mode: 'no-cors', // Diperlukan agar tidak terkena CORS policy browser
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nama: namaPembeli,
+                hp: hpPembeli,
+                alamat: alamatPembeli,
+                belanjaan: globalTextDaftarBelanja
+            })
+        });
+        console.log("Data berhasil dikirim ke Google Sheets.");
+    } catch (error) {
+        console.error("Gagal mengirim ke Google Sheets:", error);
+    }
+
+    // 2. MENYUSUN FORMAT TEXT UNTUK WHATSAPP ADMIN
+    const templatePesanWA = `Halo Admin Figurorama, saya ingin memesan item berikut:
 
 ${globalTextDaftarBelanja}
 
@@ -701,17 +728,20 @@ ${globalTextDaftarBelanja}
 
 Mohon dihitung total ongkirnya ya Admin, terima kasih!`;
 
-            const finalWaUrl = `https://wa.me/6281322555224?text=${encodeURIComponent(templatePesanWA)}`;
-            
-            // Buka tab WhatsApp dengan pesan yang sudah jadi otomatis
-            window.open(finalWaUrl, '_blank');
+    const finalWaUrl = `https://wa.me/6281322555224?text=${encodeURIComponent(templatePesanWA)}`;
+    
+    // Buka tab WhatsApp
+    window.open(finalWaUrl, '_blank');
 
-            // Bersihkan data setelah berhasil submit demi keamanan
-            cart = [];
-            globalTextDaftarBelanja = "";
-            updateCartUI();
-            closeFormModal();
-        }
+    // Kembalikan status tombol dan bersihkan keranjang
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnText;
+
+    cart = [];
+    globalTextDaftarBelanja = "";
+    updateCartUI();
+    closeFormModal();
+}
 
         function toggleDarkMode() {
             if (document.documentElement.classList.contains('dark')) {
