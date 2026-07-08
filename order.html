@@ -169,8 +169,15 @@
         function printLabel(b64Nama, b64Alamat, b64Produk) {
             const nama = decodeURIComponent(escape(atob(b64Nama)));
             const alamat = decodeURIComponent(escape(atob(b64Alamat)));
-            // Hapus harga (regex: angka yang diikuti Rp atau di dalam kurung)
-            const produk = decodeURIComponent(escape(atob(b64Produk))).replace(/(\d+[\.\,]?\d*\s?)(Rp|IDR)/gi, '').replace(/\(.*\d.*\)/, '').trim();
+            
+            // PEMBERSIH HARGA YANG LEBIH KUAT:
+            // Menghapus pola seperti: "100.000", "100rb", "(Rp 100.000)", "Rp100.000", "100.000,-"
+            let rawProduk = decodeURIComponent(escape(atob(b64Produk)));
+            const produk = rawProduk
+                .replace(/(Rp\.?\s?\d+[\d\.,]*|[\d\.,]+\s?(rb|k|juta))/gi, '') // Hapus pola harga
+                .replace(/[\(\[\{].*?[\)\]\}]/g, '') // Hapus teks di dalam kurung/siku (biasanya tempat harga)
+                .replace(/[,-]+$/g, '') // Hapus sisa tanda baca di akhir
+                .trim();
 
             document.getElementById('lbl-penerima').innerText = nama;
             document.getElementById('lbl-alamat').innerText = alamat;
