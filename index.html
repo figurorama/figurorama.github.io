@@ -62,8 +62,8 @@
         </div>
     </section>
 
-    <main class="max-w-6xl mx-auto px-4 py-12">
-        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <main class="max-w-6xl mx-auto px-4 py-6 sm:py-12">
+        <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
             <p class="text-center col-span-full text-gray-500 dark:text-gray-400 py-12">Memuat katalog produk Figurorama...</p>
         </div>
         <div id="pagination-controls" class="flex justify-center items-center gap-2 mt-12 flex-wrap"></div>
@@ -100,7 +100,7 @@
                     <button id="modal-add-cart-btn" onclick="addToCartFromModal()" class="w-full text-center py-3 font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition shadow-sm">
                         🛒 Tambah ke Keranjang Belanja
                     </button>
-                    <a id="modal-tokped-btn" href="#" target="_blank" class="w-full text-center py-3 font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-100 transition shadow-sm">
+                    <a id="modal-tokped-btn" href="#" target="_blank" class="w-full text-center py-3 font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition shadow-sm">
                         🛍️ Cari Produk ini di Tokopedia
                     </a>
                 </div>
@@ -196,7 +196,6 @@
         function applyFilterAndSearch() {
             const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
             
-            // 1. Filter Berdasarkan Kategori Utama
             let baseProducts = [];
             if (currentCategory === 'habis') {
                 baseProducts = allProducts.filter(p => p.Status && p.Status.trim().toLowerCase() === 'kosong');
@@ -206,7 +205,6 @@
                 baseProducts = allProducts.filter(p => p.Kategori && p.Kategori.trim().toLowerCase() === currentCategory && (!p.Status || p.Status.trim().toLowerCase() !== 'kosong'));
             }
 
-            // 2. Filter Berdasarkan Kolom Pencarian (Search Input)
             if (searchQuery !== '') {
                 filteredProducts = baseProducts.filter(p => p.Nama && p.Nama.toLowerCase().includes(searchQuery));
             } else {
@@ -266,40 +264,41 @@
                 if (diskonValue && hargaDiskonMentah) {
                     let formattedBaru = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(hargaDiskonMentah).replace(/\s?/g, '');
                     htmlHarga = `
-                        <span class="text-gray-400 dark:text-gray-500 line-through text-[11px] block">Rp ${parseInt(hargaNormalMentah).toLocaleString('id-ID')}</span>
-                        <span class="text-emerald-700 dark:text-emerald-400 font-extrabold text-lg block leading-tight">${formattedBaru}</span>
+                        <span class="text-gray-400 dark:text-gray-500 line-through text-[10px] block">Rp ${parseInt(hargaNormalMentah).toLocaleString('id-ID')}</span>
+                        <span class="text-emerald-700 dark:text-emerald-400 font-extrabold text-sm sm:text-lg block leading-tight">${formattedBaru}</span>
                     `;
                 } else {
                     let formattedNormal = "Hubungi Admin";
                     if (hargaNormalMentah) {
                         formattedNormal = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(hargaNormalMentah).replace(/\s?/g, '');
                     }
-                    htmlHarga = `<span class="text-gray-700 dark:text-gray-200 font-extrabold text-lg block">${formattedNormal}</span>`;
+                    htmlHarga = `<span class="text-gray-700 dark:text-gray-200 font-extrabold text-sm sm:text-lg block">${formattedNormal}</span>`;
                 }
 
+                // MODIFIKASI 2: Mengoptimalkan padding (p-2.5 sm:p-4), teks (text-xs sm:text-base) agar pas & rapi saat dijejer 2 kolom di layar kecil smartphone
                 return `
                     <div onclick="openModalByName('${namaAman}')" class="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between cursor-pointer group">
                         <div>
                             <div class="relative pb-[100%] bg-gray-50 dark:bg-gray-900 overflow-hidden">
                                 <img src="${p.Foto || 'https://via.placeholder.com/300?text=No+Image'}" alt="${namaProduk}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
-                                <span class="absolute top-2 right-2 text-xs font-semibold px-2 py-1 rounded shadow-sm ${isKosong ? 'bg-red-100 text-red-800' : p.Status === 'Ready' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                <span class="absolute top-1.5 right-1.5 text-[9px] sm:text-xs font-semibold px-1.5 py-0.5 sm:py-1 rounded shadow-sm ${isKosong ? 'bg-red-100 text-red-800' : p.Status === 'Ready' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
                                     ${p.Status || 'Ready'}
                                 </span>
                                 ${diskonValue ? `
-                                    <span class="absolute bottom-2 right-2 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm tracking-wider animate-pulse">
+                                    <span class="absolute bottom-1.5 right-1.5 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm tracking-wider animate-pulse">
                                         -${diskonValue}%
                                     </span>
                                 ` : ''}
                             </div>
-                            <div class="p-4">
-                                <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">${p.Kategori || 'General'}</span>
-                                <h4 class="font-bold text-gray-800 dark:text-gray-100 text-base mt-1 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">${namaProduk}</h4>
-                                <div class="mt-2 h-12 flex flex-col justify-end">
+                            <div class="p-2.5 sm:p-4">
+                                <span class="text-[9px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">${p.Kategori || 'General'}</span>
+                                <h4 class="font-bold text-gray-800 dark:text-gray-100 text-xs sm:text-base mt-0.5 sm:mt-1 line-clamp-2 h-8 sm:h-12 leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">${namaProduk}</h4>
+                                <div class="mt-2 h-10 sm:h-12 flex flex-col justify-end">
                                     ${htmlHarga}
                                 </div>
                             </div>
                         </div>
-                        <div class="p-4 pt-0 text-center text-xs font-medium text-emerald-600 dark:text-emerald-400 group-hover:underline">
+                        <div class="p-2.5 sm:p-4 pt-0 text-center text-[11px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400 group-hover:underline">
                             Lihat Detail ➔
                         </div>
                     </div>
@@ -508,7 +507,6 @@
             }
         }
 
-        // Cek preferensi tema saat load awal halaman (Default Light Mode jika belum ada pilihan di local storage)
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
         } else {
