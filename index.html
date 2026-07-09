@@ -31,6 +31,27 @@
                 <input type="text" id="search-input" oninput="handleSearch()" placeholder="Cari produk favorit Anda..." class="w-full px-5 py-3 rounded-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 transition placeholder-gray-400">
                 <span class="absolute right-4 top-3.5 text-gray-400">🔍</span>
             </div>
+                <div class="flex justify-center mb-6">
+                <div class="relative w-full max-w-xs">
+                    <label for="category-select-filter" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1 text-center sm:text-left">
+                        Filter Kategori
+                    </label>
+                    <select id="category-select-filter" onchange="handleCategoryDropdownChange(this)" class="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer appearance-none">
+                        <option value="all">🌐 All Items</option>
+                        <option value="1/6 Figures and parts">🧩 1/6 Figures & Parts</option>
+                        <option value="1/12 Figures and parts">🧩 1/12 Figures & Parts</option>
+                        <option value="Gunpla">🤖 Gunpla</option>
+                        <option value="1/64th scale">🚗 1/64th Scale</option>
+                        <option value="others">📦 Others</option>
+                        <option value="habis">🚫 Habis / Kosong</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 pt-5">
+                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
             </div>
             <div class="flex items-center justify-center sm:justify-end space-x-3 sm:space-x-4 w-full sm:w-auto">
                 <button onclick="openFaqModal()" class="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl transition border border-emerald-200 dark:border-emerald-800 flex items-center gap-1" title="Frequently Asked Questions">
@@ -969,6 +990,16 @@ Saya akan segera melakukan transfer ke rekening BCA toko, mohon dikonfirmasi ya 
 
             updateCartUI();
             closeFormModal();
+        }
+
+        // Fungsi penjembatan dari dropdown select ke sistem filter asli
+        function handleCategoryDropdownChange(selectElement) {
+            const selectedCategory = selectElement.value;
+            
+            // Tetap memanggil fungsi filter bawaan tokomu tanpa merusak logika aslinya
+            if (typeof filterCategory === 'function') {
+                filterCategory(selectedCategory);
+            }
         }
         
         function toggleDarkMode() {
