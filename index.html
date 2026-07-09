@@ -863,6 +863,7 @@
         }
 
        // --- PROSES SUBMIT FORM DAN INTEGRASI AKHIR ---
+        // --- PROSES SUBMIT FORM DAN INTEGRASI AKHIR ---
         async function handleFormSubmit(event) {
             event.preventDefault();
 
@@ -876,17 +877,19 @@
             const selectKota = document.getElementById('form-kota');
             const namaKota = selectKota.options[selectKota.selectedIndex].text;
 
-            // === 1. AMANKAN DATA YANG MAU DISIMPAN KE LOCALSTORAGE (BIAR GA NUMPUK) ===
-            // Kita bersihkan dulu teks kota & provinsi dari variabel alamatPembeli sebelum disimpan,
-            // jadi yang tersimpan di memori browser SELALU murni nama jalan saja.
+            // === 🔥 SOLUSI ANTI MEMANJANG (DIPERBAIKI ONCE AND FOR ALL) ===
+            // Kita bersihkan dulu teks kota & provinsi dari input alamatPembeli sebelum disimpan ke localStorage.
+            // Dengan cara ini, yang tersimpan di memori browser SELALU MURNI NAMA JALAN saja, 
+            // sehingga pas orderan berikutnya di-autofill, alamatnya TIDAK AKAN PERNAH GANDA ATAU MEMANJANG!
             let alamatMurni = alamatPembeli
-                .replace(`, ${namaKota}`, "")
-                .replace(`, ${namaProvinsi}`, "")
+                .replace(new RegExp(`,\\s*${namaKota}`, 'gi'), "")
+                .replace(new RegExp(`,\\s*${namaProvinsi}`, 'gi'), "")
                 .trim();
 
+            // 1. SIMPAN DATA MEMBER DI LOKAL BROWSER PEMBELI (Autofill Tetap Aman & Hidup)
             localStorage.setItem('member_nama', namaPembeli);
             localStorage.setItem('member_hp', hpPembeli);
-            localStorage.setItem('member_alamat', alamatMurni); // Simpan alamat murninya saja
+            localStorage.setItem('member_alamat', alamatMurni); // Yang disimpan cuma nama jalan murninya
 
             // Perbarui sapaan header secara langsung
             const welcomeElement = document.getElementById('welcome-member');
@@ -894,44 +897,48 @@
                 welcomeElement.innerHTML = `👋 Halo, <span class="font-bold text-emerald-600 dark:text-emerald-400">${namaPembeli}</span> (Member Toko)`;
             }
 
-            // === 2. SUSUN DATA BERDASARKAN FORM UNTUK WA & GOOGLE SHEETS ===
-            const formattedTotalAkhir = "Rp " + (totalHarga + ongkirTerpilih).toLocaleString('id-ID');
+            // Hitung total akhir gabungan belanja + ongkir (Variabel Asli Kode Lu)
+            const totalHargaBarang = cart.reduce((sum, item) => sum + (item.Harga * item.qty), 0);
+            const totalAkhirSemua = totalHargaBarang + ongkirTerpilih;
+            const formattedTotalAkhir = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalAkhirSemua).replace(/\s?/g, '');
 
-            // Kita buat satu variabel alamat gabungan yang rapi untuk dikirim
-            const alamatKirimLengkap = `${alamatMurni}, ${namaKota}, ${namaProvinsi}`;
+            // 2. SIAPKAN TEMPLATE PESAN WHATSAPP DENGAN ONGKIR SPECIFIC (Kode Asli Lu)
+            const templatePesanWA = `Halo Admin Figurorama, saya ingin memesan item berikut:
 
-            const waMessage = 
-`*PESANAN BARU VIA WEB*
-----------------------------------
-*Data Pembeli:*
-Nama: ${namaPembeli}
-No HP: ${hpPembeli}
-Alamat: ${alamatKirimLengkap}
-
-*Daftar Belanja:*
 ${globalTextDaftarBelanja}
-----------------------------------
-*Total Akhir:* *${formattedTotalAkhir}*`;
+📦 Ongkos Kirim: Rp ${ongkirTerpilih.toLocaleString('id-ID')} (${teksKurirTerpilih})
+💰 TOTAL KESELURUHAN: ${formattedTotalAkhir}
 
-            const finalWaUrl = `https://wa.me/6281322555224?text=${encodeURIComponent(waMessage)}`;
+---------------------------------------
+👤 DATA LENGKAP PENGIRIMAN:
+• Nama: ${namaPembeli}
+• No. HP: ${hpPembeli}
+• Alamat: ${alamatMurni}
+• Kota/Kab: ${namaKota}
+• Provinsi: ${namaProvinsi}
+---------------------------------------
 
-            // 3. LANGSUNG BUKA WHATSAPP
+Saya akan segera melakukan transfer ke rekening BCA toko, mohon dikonfirmasi ya Admin, terima kasih!`;
+
+            const finalWaUrl = `https://wa.me/6281322555224?text=${encodeURIComponent(templatePesanWA)}`;
+            
+            // 3. LANGSUNG BUKA WHATSAPP (INSTANT/TANPA MENUNGGU GOOGLE SHEETS)
             window.open(finalWaUrl, '_blank');
 
             // 4. KIRIM KE GOOGLE SHEETS DI LATAR BELAKANG
+            // Kita kirim format gabungan murni: Alamat Jalan + Kota + Provinsi saja tanpa numpuk-numpuk lagi
+            const alamatKirimKeSheets = `${alamatMurni}, ${namaKota}, ${namaProvinsi}`;
+
             fetch(googleSheetsWebAppUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     nama: namaPembeli,
                     hp: hpPembeli,
-                    // Mengirimkan alamat gabungan yang rapi + info kurir
-                    alamat: `${alamatKirimLengkap} (${teksKurirTerpilih} - Rp ${ongkirTerpilih.toLocaleString('id-ID')})`,
+                    alamat: `${alamatKirimKeSheets} (${teksKurirTerpilih} - Rp ${ongkirTerpilih.toLocaleString('id-ID')})`,
                     belanjaan: globalTextDaftarBelanja + `\nTotal Akhir + Ongkir: ${formattedTotalAkhir}`,
-                    items: cart.map(item => ({
-                        nama: item.Nama,
-                        qty: item.qty
-                    }))
+                    items: cart.map(item => ({ nama: item.Nama, qty: item.qty }))
                 })
             }).catch(error => console.error("Gagal mengirim ke Google Sheets di background:", error));
 
@@ -941,8 +948,8 @@ ${globalTextDaftarBelanja}
             ongkirTerpilih = 0;
             teksKurirTerpilih = "";
             
-            // Mengosongkan form setelah submit agar bersih untuk orderan berikutnya
-            const orderForm = document.getElementById('order-form');
+            // Kita reset formnya biar kosong kembali setelah order selesai dikirim
+            const orderForm = document.getElementById('internal-shipping-form') || document.getElementById('order-form');
             if (orderForm) orderForm.reset();
 
             updateCartUI();
