@@ -25,21 +25,21 @@
             scrollbar-width: none;  /* Firefox */
         }
 
-        /* --- CSS Tambahan untuk Fitur Draggable & Autoscroll --- */
+        /* --- CSS Diperbarui untuk Fitur Infinite Autoscroll + Drag JavaScript --- */
         .featured-wrapper {
             overflow: hidden;
             width: 100%;
             position: relative;
+            cursor: grab;
+            user-select: none;
+        }
+        .featured-wrapper:active {
+            cursor: grabbing;
         }
         .featured-track {
             display: flex;
             width: max-content;
-            cursor: grab;
-            user-select: none;
-            overflow-x: hidden; /* Sembunyikan scrollbar native */
-        }
-        .featured-track:active {
-            cursor: grabbing;
+            will-change: transform;
         }
     </style>
 </head>
@@ -104,7 +104,7 @@
         <h2 class="text-lg sm:text-xl font-extrabold text-gray-800 dark:text-white mb-4 tracking-wide flex items-center gap-2">
             ⭐ FEATURED PRODUCTS
         </h2>
-        <div class="featured-wrapper">
+        <div class="featured-wrapper" id="featured-wrapper">
             <div id="featured-grid" class="featured-track space-x-4">
                 </div>
         </div>
@@ -348,9 +348,14 @@
         let ongkirTerpilih = 0;
         let teksKurirTerpilih = "";
 
-        // --- Variabel untuk fitur Featured Scroll ---
-        let autoScrollTimer;
-        let resumeScrollTimer;
+        // State Global Tambahan Untuk Smooth JavaScript Drag & Autoscroll Looping
+        let isDown = false;
+        let startX;
+        let scrollLeftPos;
+        let currentXPos = 0;
+        let animationFrameId = null;
+        let isHovered = false;
+        const scrollSpeed = 0.8; // Kecepatan jalan perlahan (setara dengan animasi CSS sebelumnya)
 
         async function fetchProducts() {
             try {
@@ -421,6 +426,7 @@
 
             container.classList.remove('hidden');
 
+            // --- TRICK INFINITE LOOP: Map HTML utama ---
             const itemsHtml = featuredItems.map((p) => {
                 const namaProduk = p.Nama || "Collectible Item";
                 const namaAman = namaProduk.replace(/['"]/g, '\\$&');
@@ -474,91 +480,99 @@
                 `;
             }).join('');
 
-            // Masukkan 2x untuk efek loop mulus
+            // Trik Infinite Loop: Menggabungkan HTML utama + HTML Kloningan di dalam track yang sama
             grid.innerHTML = itemsHtml + itemsHtml;
 
-            // --- Inisialisasi Fitur Scroll ---
+            // Inisialisasi Kontrol Interaksi Mouse & Sentuhan Tangan via JavaScript
             initFeaturedScroll();
         }
 
-        // --- Logika Draggable & Autoscroll ---
+        // --- SISTEM BARU JAVASCRIPT ANIMATION LOOP (DRAG, SWIPE & AUTOSCROLL) ---
         function initFeaturedScroll() {
+            const wrapper = document.getElementById('featured-wrapper');
             const track = document.getElementById('featured-grid');
-            let isDown = false;
-            let startX;
-            let scrollLeft;
+            if (!wrapper || !track) return;
 
-            const startAutoscroll = () => {
-                stopAutoscroll(); // Bersihkan sebelumnya
-                autoScrollTimer = setInterval(() => {
-                    track.scrollLeft += 1;
-                    if (track.scrollLeft >= (track.scrollWidth / 2)) {
-                        track.scrollLeft = 0;
+            // Stop loop lama kalau ada re-render
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            
+            currentXPos = 0;
+            isDown = false;
+            isHovered = false;
+
+            // Fungsi Loop Utama Jalannya Autoscroll
+            function step() {
+                if (!isDown && !isHovered) {
+                    currentXPos -= scrollSpeed;
+                    
+                    // Jika track bergeser melewati setengah dari total panjang konten (kloningan), reset ke posisi 0
+                    const halfWidth = track.scrollWidth / 2;
+                    if (Math.abs(currentXPos) >= halfWidth) {
+                        currentXPos = 0;
                     }
-                }, 30);
-            };
-
-            const stopAutoscroll = () => {
-                clearInterval(autoScrollTimer);
-                clearTimeout(resumeScrollTimer);
-            };
-
-            const resumeAfterDelay = () => {
-                resumeScrollTimer = setTimeout(() => {
-                    startAutoscroll();
-                }, 2000); // Resume setelah 2 detik
-            };
-
-            // Mouse Events
-            track.addEventListener('mousedown', (e) => {
-                isDown = true;
-                stopAutoscroll();
-                startX = e.pageX - track.offsetLeft;
-                scrollLeft = track.scrollLeft;
-            });
-
-            track.addEventListener('mouseleave', () => {
-                if(isDown) {
-                    isDown = false;
-                    resumeAfterDelay();
+                    track.style.transform = `translateX(${currentXPos}px)`;
                 }
+                animationFrameId = requestAnimationFrame(step);
+            }
+            animationFrameId = requestAnimationFrame(step);
+
+            // Perhitungan reset posisi saat drag manual agar mulus melingkar (infinite loop)
+            function checkBoundsBeforeDrag() {
+                const halfWidth = track.scrollWidth / 2;
+                if (currentXPos > 0) {
+                    currentXPos -= halfWidth;
+                } else if (Math.abs(currentXPos) >= halfWidth) {
+                    currentXPos += halfWidth;
+                }
+                track.style.transform = `translateX(${currentXPos}px)`;
+            }
+
+            // Event Mouse (Desktop)
+            wrapper.addEventListener('mousedown', (e) => {
+                isDown = true;
+                checkBoundsBeforeDrag();
+                startX = e.pageX - currentXPos;
             });
 
-            track.addEventListener('mouseup', () => {
+            wrapper.addEventListener('mouseleave', () => {
                 isDown = false;
-                resumeAfterDelay();
+                isHovered = false;
             });
 
-            track.addEventListener('mousemove', (e) => {
+            wrapper.addEventListener('mouseup', () => {
+                isDown = false;
+            });
+
+            wrapper.addEventListener('mousemove', (e) => {
                 if (!isDown) return;
                 e.preventDefault();
-                const x = e.pageX - track.offsetLeft;
-                const walk = (x - startX);
-                track.scrollLeft = scrollLeft - walk;
+                const x = e.pageX - startX;
+                currentXPos = x;
+                track.style.transform = `translateX(${currentXPos}px)`;
             });
 
-            // Touch Events
-            track.addEventListener('touchstart', (e) => {
+            // Efek Jeda Saat Hover (Kursor mengambang di atas produk)
+            wrapper.addEventListener('mouseenter', () => {
+                isHovered = true;
+            });
+
+            // Event Sentuhan Tangan (Mobile Swipe)
+            wrapper.addEventListener('touchstart', (e) => {
                 isDown = true;
-                stopAutoscroll();
-                startX = e.touches[0].pageX - track.offsetLeft;
-                scrollLeft = track.scrollLeft;
-            });
+                checkBoundsBeforeDrag();
+                startX = e.touches[0].pageX - currentXPos;
+            }, { passive: true });
 
-            track.addEventListener('touchend', () => {
+            wrapper.addEventListener('touchend', () => {
                 isDown = false;
-                resumeAfterDelay();
             });
 
-            track.addEventListener('touchmove', (e) => {
+            wrapper.addEventListener('touchmove', (e) => {
                 if (!isDown) return;
-                const x = e.touches[0].pageX - track.offsetLeft;
-                const walk = (x - startX);
-                track.scrollLeft = scrollLeft - walk;
-            });
-
-            // Mulai autoscroll awal
-            startAutoscroll();
+                const x = e.touches[0].pageX - startX;
+                currentXPos = x;
+                track.style.transform = `translateX(${currentXPos}px)`;
+            }, { passive: true });
         }
 
         function applyFilterAndSearch() {
@@ -589,6 +603,15 @@
 
         function filterCategory(cat) {
             currentCategory = cat.toLowerCase();
+            const buttons = document.querySelectorAll('#category-filters button');
+            buttons.forEach(btn => {
+                const targetCat = btn.getAttribute('data-cat');
+                if(targetCat === currentCategory) {
+                    btn.className = currentCategory === 'habis' ? "px-4 py-2 rounded-full text-sm font-medium bg-red-600 border border-red-500 text-white shadow-sm" : "px-4 py-2 rounded-full text-sm font-medium bg-emerald-600 border border-emerald-500 text-white shadow-sm";
+                } else {
+                    btn.className = btn.getAttribute('data-cat') === 'habis' ? "px-4 py-2 rounded-full text-sm font-medium bg-white/90 dark:bg-gray-800/90 shadow-sm border text-red-600 dark:text-red-400 border-red-200 dark:border-red-900" : "px-4 py-2 rounded-full text-sm font-medium bg-white/90 dark:bg-gray-800/90 shadow-sm border text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:bg-emerald-50 dark:hover:bg-gray-600";
+                }
+            });
             currentPage = 1;
             applyFilterAndSearch();
         }
@@ -681,7 +704,7 @@
         function changePage(pageNumber) {
             currentPage = pageNumber;
             renderProducts();
-            document.getElementById('product-grid').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('category-filters').scrollIntoView({ behavior: 'smooth' });
         }
 
         function openModalByName(namaProduk, isFromPopstate = false) {
@@ -736,6 +759,7 @@
                 lblHargaUtama.innerText = formattedNormal;
             }
 
+            // --- TAMPILAN BERAT PRODUK (KONVERSI GRAM KE KG) ---
             const lblBerat = document.getElementById('modal-berat');
             let beratGram = p[beratKey] ? parseFloat(p[beratKey].replace(/[^0-9.]/g, '')) : 0;
             if (beratGram > 0) {
@@ -846,6 +870,7 @@
             }
         }
 
+        // --- SISTEM DETEKSI MEMBER LAMA & AUTOFILL FORM ---
         function checkReturnMember() {
             const savedNama = localStorage.getItem('member_nama');
             const savedHp = localStorage.getItem('member_hp');
@@ -859,23 +884,27 @@
                     welcomeElement.innerHTML = `👋 Halo, <span class="font-bold text-emerald-600 dark:text-emerald-400">${savedNama}</span> (Member Toko)`;
                 }
                 
+                // Isi otomatis kolom input form
                 if(document.getElementById('form-nama')) document.getElementById('form-nama').value = savedNama;
                 if(document.getElementById('form-hp')) document.getElementById('form-hp').value = savedHp;
-                if(document.getElementById('form-alamat')) document.getElementById('form-alamat').value = savedAlamat; 
+                if(document.getElementById('form-alamat')) document.getElementById('form-alamat').value = savedAlamat; // Cuma ngisi nama jalan murni
 
+                // Otomatis pilih dropdown Provinsi jika ada datanya
                 if (savedProv) {
                     const selectProv = document.getElementById('form-provinsi');
                     if (selectProv) {
                         selectProv.value = savedProv;
+                        // Trigger event 'change' biar dropdown Kota otomatis nge-load datanya RajaOngkir
                         selectProv.dispatchEvent(new Event('change'));
                         
+                        // Kasih jeda waktu sedikit nunggu data kota selesai di-load API, baru set data kotanya
                         setTimeout(() => {
                             const selectKota = document.getElementById('form-kota');
                             if (selectKota && savedKota) {
                                 selectKota.value = savedKota;
                                 selectKota.dispatchEvent(new Event('change'));
                             }
-                        }, 800); 
+                        }, 800); // Jeda 0.8 detik
                     }
                 }
             }
@@ -884,7 +913,7 @@
         function openFormModal() {
             document.getElementById('form-modal').classList.remove('hidden');
             checkReturnMember();
-            loadProvinsi(); 
+            loadProvinsi(); // Pemicu otomatis load wilayah RajaOngkir
         }
 
         function closeFormModal(isFromPopstate = false) {
@@ -896,6 +925,7 @@
             }
         }
 
+        // --- MANAJEMEN KERANJANG BELANJA ---
         function toggleCartDrawer(isFromPopstate = false) {
             const drawer = document.getElementById('cart-drawer');
             const isClosing = !drawer.classList.contains('translate-x-full');
@@ -932,6 +962,7 @@
                 }
 
                 let beratMentah = currentModalProduct[beratKey] ? parseFloat(currentModalProduct[beratKey].replace(/[^0-9.]/g, '')) : 0;
+                // Jika data berat di sheet kosong/0, berikan fallback aman default 500 gram
                 if (isNaN(beratMentah) || beratMentah <= 0) beratMentah = 500;
 
                 cart.push({
@@ -1013,6 +1044,7 @@
             openFormModal();
         }
 
+        // --- SISTEM FUNGSI KOMUNIKASI RAJAONGKIR VIA PROXY GOOGLE APPS SCRIPT ---
         async function loadProvinsi() {
             const provSelect = document.getElementById('form-provinsi');
             provSelect.innerHTML = '<option value="">Memuat provinsi...</option>';
@@ -1051,6 +1083,7 @@
 
             layananSelect.innerHTML = '<option value="">Menghitung biaya ongkir...</option>';
             
+            // Menggunakan data kolom berat riil dari item yang berada di dalam keranjang belanja
             const totalBerat = cart.reduce((sum, item) => sum + (item.qty * item.Berat), 0);
 
             try {
@@ -1081,38 +1114,44 @@
             teksKurirTerpilih = selectedOption.getAttribute('data-kurir') || "";
         }
 
+       // --- PROSES SUBMIT FORM DAN INTEGRASI AKHIR ---
         async function handleFormSubmit(event) {
             event.preventDefault();
 
             const namaPembeli = document.getElementById('form-nama').value.trim();
             const hpPembeli = document.getElementById('form-hp').value.trim();
-            const alamatPembeli = document.getElementById('form-alamat').value.trim(); 
+            const alamatPembeli = document.getElementById('form-alamat').value.trim(); // Ini cuma nama jalan murni
             
             const selectProv = document.getElementById('form-provinsi');
             const namaProvinsi = selectProv.options[selectProv.selectedIndex].text;
-            const idProvinsi = selectProv.value; 
+            const idProvinsi = selectProv.value; // Ambil ID provinsi untuk auto-select nanti
             
             const selectKota = document.getElementById('form-kota');
             const namaKota = selectKota.options[selectKota.selectedIndex].text;
-            const idKota = selectKota.value; 
+            const idKota = selectKota.value; // Ambil ID kota untuk auto-select nanti
 
+            // === 1. SIMPAN KE LOCALSTORAGE SECARA TERPISAH (Ide ChatGPT) ===
             localStorage.setItem('member_nama', namaPembeli);
             localStorage.setItem('member_hp', hpPembeli);
-            localStorage.setItem('member_alamat', alamatPembeli); 
-            localStorage.setItem('member_provinsi', idProvinsi); 
-            localStorage.setItem('member_kota', idKota);         
+            localStorage.setItem('member_alamat', alamatPembeli); // Cuma simpan nama jalan
+            localStorage.setItem('member_provinsi', idProvinsi); // Simpan ID Provinsi
+            localStorage.setItem('member_kota', idKota);         // Simpan ID Kota
 
+            // Perbarui sapaan header secara langsung
             const welcomeElement = document.getElementById('welcome-member');
             if (welcomeElement) {
                 welcomeElement.innerHTML = `👋 Halo, <span class="font-bold text-emerald-600 dark:text-emerald-400">${namaPembeli}</span> (Member Toko)`;
             }
 
+            // Hitung total akhir gabungan belanja + ongkir menggunakan variabel asli lu
             const totalHargaBarang = cart.reduce((sum, item) => sum + (item.Harga * item.qty), 0);
             const totalAkhirSemua = totalHargaBarang + ongkirTerpilih;
             const formattedTotalAkhir = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalAkhirSemua).replace(/\s?/g, '');
 
+            // Gabungkan alamat murni, kota, dan provinsi untuk teks WA & Sheets
             const alamatKirimLengkap = `${alamatPembeli}, ${namaKota}, ${namaProvinsi}`;
 
+            // 2. TEMPLATE PESAN WA ASLI LU
             const templatePesanWA = `Halo Admin Figurorama, saya ingin memesan item berikut:
 
 ${globalTextDaftarBelanja}
@@ -1130,10 +1169,13 @@ ${globalTextDaftarBelanja}
 
 Saya akan segera melakukan transfer to rekening BCA toko, mohon dikonfirmasi ya Admin, terima kasih!`;
 
+            // MEMPERTAHANKAN NOMOR WA ASLI LU: 6281322555224
             const finalWaUrl = `https://wa.me/6281322555224?text=${encodeURIComponent(templatePesanWA)}`;
             
+            // 3. LANGSUNG BUKA WHATSAPP
             window.open(finalWaUrl, '_blank');
 
+            // 4. KIRIM DATA KE GOOGLE SHEETS DI LATAR BELAKANG
             fetch(googleSheetsWebAppUrl, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -1147,6 +1189,7 @@ Saya akan segera melakukan transfer to rekening BCA toko, mohon dikonfirmasi ya 
                 })
             }).catch(error => console.error("Gagal mengirim ke Google Sheets di background:", error));
 
+            // 5. BERSIHKAN KERANJANG DAN MODAL SECARA INSTAN
             cart = [];
             globalTextDaftarBelanja = "";
             ongkirTerpilih = 0;
@@ -1159,8 +1202,11 @@ Saya akan segera melakukan transfer to rekening BCA toko, mohon dikonfirmasi ya 
             closeFormModal();
         }
 
+        // Fungsi penjembatan dari dropdown select ke sistem filter asli
         function handleCategoryDropdownChange(selectElement) {
             const selectedCategory = selectElement.value;
+            
+            // Tetap memanggil fungsi filter bawaan tokomu tanpa merusak logika aslinya
             if (typeof filterCategory === 'function') {
                 filterCategory(selectedCategory);
             }
