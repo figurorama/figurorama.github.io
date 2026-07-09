@@ -862,7 +862,7 @@
             teksKurirTerpilih = selectedOption.getAttribute('data-kurir') || "";
         }
 
-        // --- PROSES SUBMIT FORM DAN INTEGRASI AKHIR ---
+       // --- PROSES SUBMIT FORM DAN INTEGRASI AKHIR ---
         async function handleFormSubmit(event) {
             event.preventDefault();
 
@@ -915,7 +915,7 @@ Saya akan segera melakukan transfer ke rekening BCA toko, mohon dikonfirmasi ya 
             // 3. LANGSUNG BUKA WHATSAPP (INSTANT/TANPA MENUNGGU GOOGLE SHEETS)
             window.open(finalWaUrl, '_blank');
 
-            // 4. KIRIM KE GOOGLE SHEETS DI LATAR BELAKANG (DENGAN DATA ITEMS UNTUK PENGURANGAN STOK)
+            // 4. KIRIM KE GOOGLE SHEETS DI LATAR BELAKANG (DENGAN MENAMBAHKAN PARAMETER ITEMS)
             fetch(googleSheetsWebAppUrl, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -925,7 +925,7 @@ Saya akan segera melakukan transfer ke rekening BCA toko, mohon dikonfirmasi ya 
                     hp: hpPembeli,
                     alamat: `${alamatPembeli}, ${namaKota}, ${namaProvinsi} (${teksKurirTerpilih} - Rp ${ongkirTerpilih.toLocaleString('id-ID')})`,
                     belanjaan: globalTextDaftarBelanja + `\nTotal Akhir + Ongkir: ${formattedTotalAkhir}`,
-                    items: cart.map(item => ({ nama: item.Nama, qty: item.qty }))
+                    items: cart.map(item => ({ nama: item.Nama, qty: item.qty })) // <--- PERBAIKAN: Data ini wajib dikirim agar backend tahu barang apa yang harus dikurangi stoknya!
                 })
             }).catch(error => console.error("Gagal mengirim ke Google Sheets di background:", error));
 
