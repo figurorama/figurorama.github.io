@@ -646,15 +646,38 @@
             const savedNama = localStorage.getItem('member_nama');
             const savedHp = localStorage.getItem('member_hp');
             const savedAlamat = localStorage.getItem('member_alamat');
+            const savedProv = localStorage.getItem('member_provinsi');
+            const savedKota = localStorage.getItem('member_kota');
 
-            const welcomeElement = document.getElementById('welcome-member');
-
-            if (savedNama && welcomeElement) {
-                welcomeElement.innerHTML = `👋 Halo, <span class="font-bold text-emerald-600 dark:text-emerald-400">${savedNama}</span> (Member Toko)`;
+            if (savedNama) {
+                const welcomeElement = document.getElementById('welcome-member');
+                if (welcomeElement) {
+                    welcomeElement.innerHTML = `👋 Halo, <span class="font-bold text-emerald-600 dark:text-emerald-400">${savedNama}</span> (Member Toko)`;
+                }
                 
+                // Isi otomatis kolom input form
                 if(document.getElementById('form-nama')) document.getElementById('form-nama').value = savedNama;
                 if(document.getElementById('form-hp')) document.getElementById('form-hp').value = savedHp;
-                if(document.getElementById('form-alamat')) document.getElementById('form-alamat').value = savedAlamat;
+                if(document.getElementById('form-alamat')) document.getElementById('form-alamat').value = savedAlamat; // Cuma ngisi nama jalan murni
+
+                // Otomatis pilih dropdown Provinsi jika ada datanya
+                if (savedProv) {
+                    const selectProv = document.getElementById('form-provinsi');
+                    if (selectProv) {
+                        selectProv.value = savedProv;
+                        // Trigger event 'change' biar dropdown Kota otomatis nge-load datanya RajaOngkir
+                        selectProv.dispatchEvent(new Event('change'));
+                        
+                        // Kasih jeda waktu sedikit nunggu data kota selesai di-load API, baru set data kotanya
+                        setTimeout(() => {
+                            const selectKota = document.getElementById('form-kota');
+                            if (selectKota && savedKota) {
+                                selectKota.value = savedKota;
+                                selectKota.dispatchEvent(new Event('change'));
+                            }
+                        }, 800); // Jeda 0.8 detik
+                    }
+                }
             }
         }
 
@@ -863,33 +886,27 @@
         }
 
        // --- PROSES SUBMIT FORM DAN INTEGRASI AKHIR ---
-        // --- PROSES SUBMIT FORM DAN INTEGRASI AKHIR ---
         async function handleFormSubmit(event) {
             event.preventDefault();
 
             const namaPembeli = document.getElementById('form-nama').value.trim();
             const hpPembeli = document.getElementById('form-hp').value.trim();
-            const alamatPembeli = document.getElementById('form-alamat').value.trim();
+            const alamatPembeli = document.getElementById('form-alamat').value.trim(); // Ini cuma nama jalan murni
             
             const selectProv = document.getElementById('form-provinsi');
             const namaProvinsi = selectProv.options[selectProv.selectedIndex].text;
+            const idProvinsi = selectProv.value; // Ambil ID provinsi untuk auto-select nanti
             
             const selectKota = document.getElementById('form-kota');
             const namaKota = selectKota.options[selectKota.selectedIndex].text;
+            const idKota = selectKota.value; // Ambil ID kota untuk auto-select nanti
 
-            // === 🔥 SOLUSI ANTI MEMANJANG (DIPERBAIKI ONCE AND FOR ALL) ===
-            // Kita bersihkan dulu teks kota & provinsi dari input alamatPembeli sebelum disimpan ke localStorage.
-            // Dengan cara ini, yang tersimpan di memori browser SELALU MURNI NAMA JALAN saja, 
-            // sehingga pas orderan berikutnya di-autofill, alamatnya TIDAK AKAN PERNAH GANDA ATAU MEMANJANG!
-            let alamatMurni = alamatPembeli
-                .replace(new RegExp(`,\\s*${namaKota}`, 'gi'), "")
-                .replace(new RegExp(`,\\s*${namaProvinsi}`, 'gi'), "")
-                .trim();
-
-            // 1. SIMPAN DATA MEMBER DI LOKAL BROWSER PEMBELI (Autofill Tetap Aman & Hidup)
+            // === 1. SIMPAN KE LOCALSTORAGE SECARA TERPISAH (Ide ChatGPT) ===
             localStorage.setItem('member_nama', namaPembeli);
             localStorage.setItem('member_hp', hpPembeli);
-            localStorage.setItem('member_alamat', alamatMurni); // Yang disimpan cuma nama jalan murninya
+            localStorage.setItem('member_alamat', alamatPembeli); // Cuma simpan nama jalan
+            localStorage.setItem('member_provinsi', idProvinsi); // Simpan ID Provinsi
+            localStorage.setItem('member_kota', idKota);         // Simpan ID Kota
 
             // Perbarui sapaan header secara langsung
             const welcomeElement = document.getElementById('welcome-member');
@@ -897,12 +914,15 @@
                 welcomeElement.innerHTML = `👋 Halo, <span class="font-bold text-emerald-600 dark:text-emerald-400">${namaPembeli}</span> (Member Toko)`;
             }
 
-            // Hitung total akhir gabungan belanja + ongkir (Variabel Asli Kode Lu)
+            // Hitung total akhir gabungan belanja + ongkir menggunakan variabel asli lu
             const totalHargaBarang = cart.reduce((sum, item) => sum + (item.Harga * item.qty), 0);
             const totalAkhirSemua = totalHargaBarang + ongkirTerpilih;
             const formattedTotalAkhir = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalAkhirSemua).replace(/\s?/g, '');
 
-            // 2. SIAPKAN TEMPLATE PESAN WHATSAPP DENGAN ONGKIR SPECIFIC (Kode Asli Lu)
+            // Gabungkan alamat murni, kota, dan provinsi untuk teks WA & Sheets
+            const alamatKirimLengkap = `${alamatPembeli}, ${namaKota}, ${namaProvinsi}`;
+
+            // 2. TEMPLATE PESAN WA ASLI LU
             const templatePesanWA = `Halo Admin Figurorama, saya ingin memesan item berikut:
 
 ${globalTextDaftarBelanja}
@@ -913,22 +933,20 @@ ${globalTextDaftarBelanja}
 👤 DATA LENGKAP PENGIRIMAN:
 • Nama: ${namaPembeli}
 • No. HP: ${hpPembeli}
-• Alamat: ${alamatMurni}
+• Alamat: ${alamatPembeli}
 • Kota/Kab: ${namaKota}
 • Provinsi: ${namaProvinsi}
 ---------------------------------------
 
 Saya akan segera melakukan transfer ke rekening BCA toko, mohon dikonfirmasi ya Admin, terima kasih!`;
 
+            // MEMPERTAHANKAN NOMOR WA ASLI LU: 6281322555224
             const finalWaUrl = `https://wa.me/6281322555224?text=${encodeURIComponent(templatePesanWA)}`;
             
-            // 3. LANGSUNG BUKA WHATSAPP (INSTANT/TANPA MENUNGGU GOOGLE SHEETS)
+            // 3. LANGSUNG BUKA WHATSAPP
             window.open(finalWaUrl, '_blank');
 
-            // 4. KIRIM KE GOOGLE SHEETS DI LATAR BELAKANG
-            // Kita kirim format gabungan murni: Alamat Jalan + Kota + Provinsi saja tanpa numpuk-numpuk lagi
-            const alamatKirimKeSheets = `${alamatMurni}, ${namaKota}, ${namaProvinsi}`;
-
+            // 4. KIRIM DATA KE GOOGLE SHEETS DI LATAR BELAKANG
             fetch(googleSheetsWebAppUrl, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -936,7 +954,7 @@ Saya akan segera melakukan transfer ke rekening BCA toko, mohon dikonfirmasi ya 
                 body: JSON.stringify({
                     nama: namaPembeli,
                     hp: hpPembeli,
-                    alamat: `${alamatKirimKeSheets} (${teksKurirTerpilih} - Rp ${ongkirTerpilih.toLocaleString('id-ID')})`,
+                    alamat: `${alamatKirimLengkap} (${teksKurirTerpilih} - Rp ${ongkirTerpilih.toLocaleString('id-ID')})`,
                     belanjaan: globalTextDaftarBelanja + `\nTotal Akhir + Ongkir: ${formattedTotalAkhir}`,
                     items: cart.map(item => ({ nama: item.Nama, qty: item.qty }))
                 })
@@ -948,8 +966,7 @@ Saya akan segera melakukan transfer ke rekening BCA toko, mohon dikonfirmasi ya 
             ongkirTerpilih = 0;
             teksKurirTerpilih = "";
             
-            // Kita reset formnya biar kosong kembali setelah order selesai dikirim
-            const orderForm = document.getElementById('internal-shipping-form') || document.getElementById('order-form');
+            const orderForm = document.getElementById('internal-shipping-form');
             if (orderForm) orderForm.reset();
 
             updateCartUI();
