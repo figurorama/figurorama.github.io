@@ -1149,44 +1149,48 @@ async function loadKota() {
 async function handleFormSubmit(event) {
             event.preventDefault();
 
+            // === DEFINISI URL GAS MASING-MASING GOOGLE SHEET ===
+            const urlGasPesanan = "https://script.google.com/macros/s/AKfycbwWZWiuK9_BU-VruKKWQSS4YBO5gZdUoR9oQQ5MXf10-t9vHnX6_emO8I3zqvaC3nrdlQ/exec";
+            const urlGasPelanggan = "https://script.google.com/macros/s/AKfycbxMZTdR4Wd4A3NfMHlN5zlDa1BpLipJmgFeHAsv6igUtDjhDWszvOxqF9XrQHCDWYVw/exec";
+
             const namaPembeli = document.getElementById('form-nama').value.trim();
             const hpPembeli = document.getElementById('form-hp').value.trim();
-            const alamatPembeli = document.getElementById('form-alamat').value.trim(); // Ini cuma nama jalan murni
+            const alamatPembeli = document.getElementById('form-alamat').value.trim(); 
             
             const selectProv = document.getElementById('form-provinsi');
             const namaProvinsi = selectProv.options[selectProv.selectedIndex].text;
-            const idProvinsi = selectProv.value; // Ambil ID provinsi untuk auto-select nanti
+            const idProvinsi = selectProv.value; 
             
             const selectKota = document.getElementById('form-kota');
             const namaKota = selectKota.options[selectKota.selectedIndex].text;
-            const idKota = selectKota.value; // Ambil ID kota untuk auto-select nanti
+            const idKota = selectKota.value; 
 
-            // === 1. SIMPAN KE LOCALSTORAGE SECARA TERPISAH (Ide ChatGPT) ===
+            // === 1. SIMPAN KE LOCALSTORAGE PENGIRIMAN ===
             localStorage.setItem('member_nama', namaPembeli);
             localStorage.setItem('member_hp', hpPembeli);
-            localStorage.setItem('member_alamat', alamatPembeli); // Cuma simpan nama jalan
-            localStorage.setItem('member_provinsi', idProvinsi); // Simpan ID Provinsi
-            localStorage.setItem('member_kota', idKota);         // Simpan ID Kota
+            localStorage.setItem('member_alamat', alamatPembeli); 
+            localStorage.setItem('member_provinsi', idProvinsi); 
+            localStorage.setItem('member_kota', idKota);         
 
-            // Perbarui sapaan header secara langsung
+            // Perbarui sapaan header
             const welcomeElement = document.getElementById('welcome-member');
             if (welcomeElement) {
                 welcomeElement.innerHTML = `👋 Halo, <span class="font-bold text-emerald-600 dark:text-emerald-400">${namaPembeli}</span> (Member Toko)`;
             }
 
-            // Hitung total akhir gabungan belanja + ongkir menggunakan variabel asli lu
+            // Hitung total akhir
             const totalHargaBarang = cart.reduce((sum, item) => sum + (item.Harga * item.qty), 0);
             const totalAkhirSemua = totalHargaBarang + ongkirTerpilih;
             const formattedTotalAkhir = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalAkhirSemua).replace(/\s?/g, '');
 
-            // Gabungkan alamat murni, kota, dan provinsi untuk teks WA & Sheets
+            // Gabungkan alamat
             const alamatKirimLengkap = `${alamatPembeli}, ${namaKota}, ${namaProvinsi}`;
 
-            // 2. TEMPLATE PESAN WA ASLI LU
+            // 2. TEMPLATE PESAN WA
             const templatePesanWA = `Halo Admin Figurorama, saya ingin memesan item berikut:
 
 ${globalTextDaftarBelanja}
-📦 Ongkos Kirim: Rp ${ongkirTerpilih.toLocaleString('id-ID')} (${teksKurirTerpilih})
+📦 Ongkos Kirim: Rp ${ongkirTerpilled.toLocaleString('id-ID')} (${teksKurirTerpilih})
 💰 TOTAL KESELURUHAN: ${formattedTotalAkhir}
 
 ---------------------------------------
@@ -1200,20 +1204,18 @@ ${globalTextDaftarBelanja}
 
 Saya akan segera melakukan transfer to rekening BCA toko, mohon dikonfirmasi ya Admin, terima kasih!`;
 
-            // MEMPERTAHANKAN NOMOR WA ASLI LU: 6281322555224
             const finalWaUrl = `https://wa.me/6281322555224?text=${encodeURIComponent(templatePesanWA)}`;
             
             // 3. LANGSUNG BUKA WHATSAPP
             window.open(finalWaUrl, '_blank');
 
-            // === [BARU] DETEKSI DAN INPUT GOOGLE SHEETS JIKA BARU PERTAMA KALI MENCET ===
+            // === [BARU & DIPERBAIKI] TEMBAK KE GOOGLE SHEET DATA PELANGGAN JIKA PERTAMA KALI ===
             if (!localStorage.getItem('pelanggan_terdaftar')) {
-                fetch(googleSheetsWebAppUrl, {
+                fetch(urlGasPelanggan, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        tipe: "pelangganBaru",
                         namalengkap: namaPembeli,
                         nohp: hpPembeli,
                         provinsi: namaProvinsi,
@@ -1222,14 +1224,13 @@ Saya akan segera melakukan transfer to rekening BCA toko, mohon dikonfirmasi ya 
                     })
                 })
                 .then(() => {
-                    // Kunci status di browser pembeli setelah sukses terkirim ke latar belakang
                     localStorage.setItem('pelanggan_terdaftar', 'true');
                 })
-                .catch(error => console.error("Gagal mencatat data pelanggan baru:", error));
+                .catch(error => console.error("Gagal mengirim ke Sheet Pelanggan:", error));
             }
 
-            // 4. KIRIM DATA KE GOOGLE SHEETS DI LATAR BELAKANG (Log Transaksi Lamamu)
-            fetch(googleSheetsWebAppUrl, {
+            // === 4. TEMBAK KE GOOGLE SHEET DATA PESANAN UTAMA (LOG TRANSAKSI) ===
+            fetch(urlGasPesanan, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
@@ -1240,9 +1241,9 @@ Saya akan segera melakukan transfer to rekening BCA toko, mohon dikonfirmasi ya 
                     belanjaan: globalTextDaftarBelanja + `\nTotal Akhir + Ongkir: ${formattedTotalAkhir}`,
                     items: cart.map(item => ({ nama: item.Nama, qty: item.qty }))
                 })
-            }).catch(error => console.error("Gagal mengirim ke Google Sheets di background:", error));
+            }).catch(error => console.error("Gagal mengirim ke Sheet Pesanan:", error));
 
-            // 5. BERSIHKAN KERANJANG DAN MODAL SECARA INSTAN
+            // 5. BERSIHKAN KERANJANG
             cart = [];
             globalTextDaftarBelanja = "";
             ongkirTerpilih = 0;
