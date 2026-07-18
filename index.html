@@ -1469,6 +1469,7 @@ function processImageKunjungan(inputElement, targetInputId, previewId) {
 
 // === MENGAMBIL DAN MERENDER DATA DARI GOOGLE SHEET CSV ===
 // === MENGAMBIL DAN MERENDER DATA DARI GOOGLE SHEET CSV ===
+// === MENGAMBIL DAN MERENDER DATA DARI GOOGLE SHEET CSV ===
 async function loadTestimonialsFromCSV() {
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSNi0jtMY2RiZDWlj4BihM6LrQfa_OsnUuGZf2tkN11J0UYIK2TUxbBeCIgPEVCpC2mygKTsXcYZa_X/pub?gid=0&single=true&output=csv";
     const container = document.getElementById('chat-messages-container');
@@ -1505,15 +1506,8 @@ async function loadTestimonialsFromCSV() {
             const isiPesan = columns[2];
             const fotoBase64 = columns[3] || "";
 
-            // === PENGATURAN JAM MENIT SESUAI FORMAT DD/MM/YYYY HH:MM ===
-            let timeString = "Terverifikasi";
-            if (timestamp && timestamp.includes(" ")) {
-                // Memisahkan teks berdasarkan spasi untuk mengambil bagian "hh:mm"
-                const parts = timestamp.split(" ");
-                if (parts[1]) {
-                    timeString = parts[1]; // Mengambil string "hh:mm" langsung
-                }
-            }
+            // === SEKARANG MURNI AMBIL DD/MM/YYYY HH:MM APA ADANYA ===
+            let timeString = timestamp ? timestamp : "Terverifikasi";
 
             // Cek apakah review ini milik user yang sedang login saat ini atau orang lain
             const currentMember = localStorage.getItem('member_nama');
