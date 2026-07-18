@@ -1468,6 +1468,7 @@ function processImageKunjungan(inputElement, targetInputId, previewId) {
 }
 
 // === MENGAMBIL DAN MERENDER DATA DARI GOOGLE SHEET CSV ===
+// === MENGAMBIL DAN MERENDER DATA DARI GOOGLE SHEET CSV ===
 async function loadTestimonialsFromCSV() {
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSNi0jtMY2RiZDWlj4BihM6LrQfa_OsnUuGZf2tkN11J0UYIK2TUxbBeCIgPEVCpC2mygKTsXcYZa_X/pub?gid=0&single=true&output=csv";
     const container = document.getElementById('chat-messages-container');
@@ -1492,29 +1493,27 @@ async function loadTestimonialsFromCSV() {
             </div>
         `;
 
-        // Loop dari baris kedua (indeks 1) karena indeks 0 adalah Header (Timestamp,Nama,Isi Pesan,Foto)
+        // Loop dari baris kedua (indeks 1) karena indeks 0 adalah Header
         for (let i = 1; i < lines.length; i++) {
             if (!lines[i].trim()) continue;
 
-            // Fungsi parser sederhana untuk menangani koma di dalam tanda kutip CSV
             const columns = parseCSVLine(lines[i]);
             if (columns.length < 3) continue;
 
-            const timestamp = columns[0];
+            const timestamp = columns[0].trim(); // Format: dd/mm/yyyy hh:mm
             const namaPelanggan = columns[1];
             const isiPesan = columns[2];
             const fotoBase64 = columns[3] || "";
 
-            // Format Jam Menit dari kolom timestamp untuk estetika WhatsApp chat
+            // === PENGATURAN JAM MENIT SESUAI FORMAT DD/MM/YYYY HH:MM ===
             let timeString = "Terverifikasi";
-            try {
-                if(timestamp) {
-                    const dateObj = new Date(timestamp);
-                    if(!isNaN(dateObj.getTime())) {
-                        timeString = dateObj.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
-                    }
+            if (timestamp && timestamp.includes(" ")) {
+                // Memisahkan teks berdasarkan spasi untuk mengambil bagian "hh:mm"
+                const parts = timestamp.split(" ");
+                if (parts[1]) {
+                    timeString = parts[1]; // Mengambil string "hh:mm" langsung
                 }
-            } catch(e) {}
+            }
 
             // Cek apakah review ini milik user yang sedang login saat ini atau orang lain
             const currentMember = localStorage.getItem('member_nama');
@@ -1544,7 +1543,7 @@ async function loadTestimonialsFromCSV() {
 
         container.innerHTML = htmlContent;
 
-        // Auto-scroll otomatis ke review paling bawah/baru setelah termuat
+        // Auto-scroll otomatis ke review paling bawah
         setTimeout(() => {
             container.scrollTop = container.scrollHeight;
         }, 200);
