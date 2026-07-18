@@ -1824,8 +1824,26 @@ async function hitungSHA256(teks) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function bukaPintuAdmin() {
-    const passwordInput = prompt("Masukkan Kunci Admin:");
+// 1. Fungsi untuk MENAMPILKAN modal (dipanggil saat tekan Alt + A)
+// Fungsi untuk memunculkan Modal
+function bukaPintuAdmin() {
+    const modal = document.getElementById('modal-login-admin');
+    const inputPass = document.getElementById('input-password-admin');
+    
+    modal.classList.remove('hidden'); // Membuka modal
+    inputPass.focus(); // Fokus ke input password
+}
+
+// Fungsi untuk menutup Modal
+function tutupModalLogin() {
+    const modal = document.getElementById('modal-login-admin');
+    modal.classList.add('hidden'); // Menutup modal
+}
+
+// Fungsi untuk proses logika loginnya
+async function prosesLoginAdmin() {
+    const inputPass = document.getElementById('input-password-admin');
+    const passwordInput = inputPass.value;
     
     if (passwordInput) {
         const hashInput = await hitungSHA256(passwordInput);
@@ -1833,18 +1851,27 @@ async function bukaPintuAdmin() {
         if (hashInput === HASH_ADMIN_RAHASIA) {
             sessionStorage.setItem('isAdmin', 'true');
             alert("Akses Admin Diterima!");
-            location.reload(); // Refresh untuk memunculkan tombol CRUD
+            window.location.href = window.location.origin + window.location.pathname;
         } else {
             alert("Kunci Salah!");
+            inputPass.value = '';
+            inputPass.focus();
         }
     }
 }
 
+// Event listener buat pemicu Alt + A
 window.addEventListener('keydown', function(e) {
-    // Menggunakan tombol Alt + huruf A (tanpa Ctrl/Shift)
     if (e.altKey && e.key.toLowerCase() === 'a') {
         e.preventDefault();
         bukaPintuAdmin(); 
+    }
+});
+
+document.getElementById('input-password-admin').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        prosesLoginAdmin();
     }
 });
 
@@ -1855,6 +1882,20 @@ function logoutAdmin() {
     window.location.href = window.location.origin + window.location.pathname;
 }
     </script>
+
+<!-- MODAL PASSWORD -->
+<div id="modal-login-admin" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 hidden">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-[90%] max-w-sm transform transition-all">
+        <h3 class="text-lg font-bold mb-4 text-gray-800">🔒 Akses Admin</h3>
+        <input type="password" id="input-password-admin" 
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" 
+               placeholder="Masukkan kunci...">
+        <div class="flex justify-end gap-2">
+            <button onclick="tutupModalLogin()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition">Batal</button>
+            <button onclick="prosesLoginAdmin()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition">Masuk</button>
+        </div>
+    </div>
+</div>
 
 <!-- Combined Floating Action Buttons (Kiri Bawah) -->
 <div class="fixed bottom-6 left-6 z-50 flex items-center gap-3">
