@@ -1152,8 +1152,6 @@ async function handleFormSubmit(event) {
             // === DEFINISI URL GAS MASING-MASING GOOGLE SHEET ===
             const urlGasPesanan = "https://script.google.com/macros/s/AKfycbwWZWiuK9_BU-VruKKWQSS4YBO5gZdUoR9oQQ5MXf10-t9vHnX6_emO8I3zqvaC3nrdlQ/exec";
             const urlGasPelanggan = "https://script.google.com/macros/s/AKfycbxMZTdR4Wd4A3NfMHlN5zlDa1BpLipJmgFeHAsv6igUtDjhDWszvOxqF9XrQHCDWYVw/exec";
-            // Nama variabel diubah jadi 'urlPotongStok' supaya TIDAK BENTROK dengan sistem bawaan tokomu
-            const urlPotongStok = "https://script.google.com/macros/s/AKfycbz9y4QMeHBfUpKvUb0fnJUKXRP1IGj0XPFgq_TdTXApaWNhmseggN0Kuk3x0jJd49h0bA/exec";
 
             const namaPembeli = document.getElementById('form-nama').value.trim();
             const hpPembeli = document.getElementById('form-hp').value.trim();
@@ -1245,16 +1243,6 @@ Saya akan segera melakukan transfer to rekening BCA toko, mohon dikonfirmasi ya 
                 })
             }).catch(error => console.error("Gagal mengirim ke Sheet Pesanan:", error));
 
-            // === [BARU] PROSES PENGURANGAN STOK DI SPREADSHEET DATABASE ===
-            fetch(urlPotongStok, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    items: cart.map(item => ({ nama: item.Nama, qty: item.qty }))
-                })
-            }).catch(error => console.error("Gagal memotong stok:", error));
-
             // 5. BERSIHKAN KERANJANG
             cart = [];
             globalTextDaftarBelanja = "";
@@ -1268,6 +1256,43 @@ Saya akan segera melakukan transfer to rekening BCA toko, mohon dikonfirmasi ya 
             closeFormModal();
             renderFloatingReviewButton();
         }
+
+        // Fungsi penjembatan dari dropdown select ke sistem filter asli
+        function handleCategoryDropdownChange(selectElement) {
+            const selectedCategory = selectElement.value;
+            
+            // Tetap memanggil fungsi filter bawaan tokomu tanpa merusak logika aslinya
+            if (typeof filterCategory === 'function') {
+                filterCategory(selectedCategory);
+            }
+        }
+        
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        window.onclick = function(e) { 
+            if(e.target === document.getElementById('product-modal')) closeModal(); 
+            if(e.target === document.getElementById('faq-modal')) closeFaqModal();
+            if(e.target === document.getElementById('form-modal')) closeFormModal();
+        }
+        
+        window.onload = function() {
+            fetchProducts();
+            checkReturnMember();
+        };
 
 // === PENGENDALI VISIBILITAS FAB BERDASARKAN LOCALSTORAGE ===
 function renderFloatingReviewButton() {
