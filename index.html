@@ -1186,11 +1186,11 @@ async function handleFormSubmit(event) {
             // Gabungkan alamat
             const alamatKirimLengkap = `${alamatPembeli}, ${namaKota}, ${namaProvinsi}`;
 
-            // 2. TEMPLATE PESAN WA
+            // 2. TEMPLATE PESAN WA (Sudah Diperbaiki dari Typo)
             const templatePesanWA = `Halo Admin Figurorama, saya ingin memesan item berikut:
 
 ${globalTextDaftarBelanja}
-📦 Ongkos Kirim: Rp ${ongkirTerpilled.toLocaleString('id-ID')} (${teksKurirTerpilih})
+📦 Ongkos Kirim: Rp ${ongkirTerpilih.toLocaleString('id-ID')} (${teksKurirTerpilih})
 💰 TOTAL KESELURUHAN: ${formattedTotalAkhir}
 
 ---------------------------------------
@@ -1209,7 +1209,7 @@ Saya akan segera melakukan transfer to rekening BCA toko, mohon dikonfirmasi ya 
             // 3. LANGSUNG BUKA WHATSAPP
             window.open(finalWaUrl, '_blank');
 
-            // === [BARU & DIPERBAIKI] TEMBAK KE GOOGLE SHEET DATA PELANGGAN JIKA PERTAMA KALI ===
+            // === [BARU] TEMBAK KE GOOGLE SHEET DATA PELANGGAN JIKA PERTAMA KALI ===
             if (!localStorage.getItem('pelanggan_terdaftar')) {
                 fetch(urlGasPelanggan, {
                     method: 'POST',
