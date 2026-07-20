@@ -440,8 +440,8 @@ document.getElementById('logo-situs').addEventListener('click', function() {
 
             if (!featuredKey) return;
 
-            // Filter item yang kolom Featured bernilai "1"
-            const featuredItems = allProducts.filter(p => p[featuredKey] && p[featuredKey].trim() === '1');
+            // Filter item yang kolom Featured bernilai "Yes"
+            const featuredItems = allProducts.filter(p => p[featuredKey] && p[featuredKey].trim() === 'Yes');
 
             if (featuredItems.length === 0) {
                 container.classList.add('hidden');
