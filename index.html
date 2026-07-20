@@ -400,7 +400,6 @@ document.getElementById('logo-situs').addEventListener('click', function() {
 
                 // Render Scrolling Featured Products secara terpisah
                 renderFeaturedProducts();
-
                 applyFilterAndSearch();
                 handleUrlParams();
             } catch (error) {
@@ -427,89 +426,98 @@ document.getElementById('logo-situs').addEventListener('click', function() {
             return list;
         }
 
-        function renderFeaturedProducts() {
-            const container = document.getElementById('featured-container');
-            const grid = document.getElementById('featured-grid');
-            if (allProducts.length === 0) return;
+function renderFeaturedProducts() {
+    const container = document.getElementById('featured-container');
+    const grid = document.getElementById('featured-grid');
+    if (allProducts.length === 0) return;
 
-            const keys = Object.keys(allProducts[0]);
-            const featuredKey = keys.find(k => k.toLowerCase() === 'featured');
-            const hargaKey = keys.find(k => k.toLowerCase() === 'harga') || 'Harga';
-            const diskonKey = keys.find(k => k.toLowerCase() === 'diskon') || 'Diskon';
-            const hargaDiskonKey = keys.find(k => k.toLowerCase() === 'harga_diskon') || 'Harga_Diskon';
+    const keys = Object.keys(allProducts[0]);
+    const featuredKey = keys.find(k => k.toLowerCase() === 'featured');
+    const hargaKey = keys.find(k => k.toLowerCase() === 'harga') || 'Harga';
+    const diskonKey = keys.find(k => k.toLowerCase() === 'diskon') || 'Diskon';
+    const hargaDiskonKey = keys.find(k => k.toLowerCase() === 'harga_diskon') || 'Harga_Diskon';
 
-            if (!featuredKey) return;
+    if (!featuredKey) return;
 
-            // Filter item yang kolom Featured bernilai "Yes"
-            const featuredItems = allProducts.filter(p => p[featuredKey] && p[featuredKey].trim() === 'Yes');
+    // Filter item yang kolom Featured bernilai "Yes"
+    const featuredItems = allProducts.filter(p => p[featuredKey] && p[featuredKey].trim() === 'Yes');
 
-            if (featuredItems.length === 0) {
-                container.classList.add('hidden');
-                return;
+    if (featuredItems.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+
+    container.classList.remove('hidden');
+
+    // --- TRICK INFINITE LOOP: Map HTML utama ---
+    const itemsHtml = featuredItems.map((p) => {
+        const namaProduk = p.Nama || "Collectible Item";
+        const namaAman = namaProduk.replace(/['"]/g, '\\$&');
+        const isKosong = p.Status && p.Status.trim().toLowerCase() === 'kosong';
+        
+        // Membersihkan string menjadi angka mentah
+        const diskonValue = p[diskonKey] ? p[diskonKey].toString().replace(/[^0-9]/g, '') : '';
+        let hargaNormalMentah = p[hargaKey] ? p[hargaKey].toString().replace(/[^0-9]/g, '') : '';
+        let hargaDiskonMentah = p[hargaDiskonKey] ? p[hargaDiskonKey].toString().replace(/[^0-9]/g, '') : '';
+        
+        // --- PERBAIKAN UTAMA: Validasi diskon harus > 0 ---
+        let htmlHarga = "";
+        const apakahDiskonValid = diskonValue && 
+                                  parseInt(diskonValue) > 0 && 
+                                  hargaDiskonMentah && 
+                                  parseInt(hargaDiskonMentah) > 0;
+
+        if (apakahDiskonValid) {
+            let formattedBaru = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(hargaDiskonMentah).replace(/\s?/g, '');
+            htmlHarga = `
+                <span class="text-gray-400 dark:text-gray-500 line-through text-[10px] block">Rp ${parseInt(hargaNormalMentah).toLocaleString('id-ID')}</span>
+                <span class="text-emerald-700 dark:text-emerald-400 font-extrabold text-xs sm:text-sm block leading-tight">${formattedBaru}</span>
+            `;
+        } else {
+            let formattedNormal = "Hubungi Admin";
+            if (hargaNormalMentah) {
+                formattedNormal = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(hargaNormalMentah).replace(/\s?/g, '');
             }
+            htmlHarga = `<span class="text-gray-700 dark:text-gray-200 font-extrabold text-xs sm:text-sm block">${formattedNormal}</span>`;
+        }
 
-            container.classList.remove('hidden');
-
-            // --- TRICK INFINITE LOOP: Map HTML utama ---
-            const itemsHtml = featuredItems.map((p) => {
-                const namaProduk = p.Nama || "Collectible Item";
-                const namaAman = namaProduk.replace(/['"]/g, '\\$&');
-                const isKosong = p.Status && p.Status.trim().toLowerCase() === 'kosong';
-                const diskonValue = p[diskonKey] ? p[diskonKey].replace(/[^0-9]/g, '') : '';
-                
-                let hargaNormalMentah = p[hargaKey] ? p[hargaKey].replace(/[^0-9]/g, '') : '';
-                let hargaDiskonMentah = p[hargaDiskonKey] ? p[hargaDiskonKey].replace(/[^0-9]/g, '') : '';
-                
-                let htmlHarga = "";
-                if (diskonValue && hargaDiskonMentah) {
-                    let formattedBaru = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(hargaDiskonMentah).replace(/\s?/g, '');
-                    htmlHarga = `
-                        <span class="text-gray-400 dark:text-gray-500 line-through text-[10px] block">Rp ${parseInt(hargaNormalMentah).toLocaleString('id-ID')}</span>
-                        <span class="text-emerald-700 dark:text-emerald-400 font-extrabold text-xs sm:text-sm block leading-tight">${formattedBaru}</span>
-                    `;
-                } else {
-                    let formattedNormal = "Hubungi Admin";
-                    if (hargaNormalMentah) {
-                        formattedNormal = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(hargaNormalMentah).replace(/\s?/g, '');
-                    }
-                    htmlHarga = `<span class="text-gray-700 dark:text-gray-200 font-extrabold text-xs sm:text-sm block">${formattedNormal}</span>`;
-                }
-
-                return `
-                    <div onclick="openModalByName('${namaAman}')" class="w-36 sm:w-48 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between cursor-pointer group flex-shrink-0">
-                        <div>
-                            <div class="relative pb-[100%] bg-gray-50 dark:bg-gray-900 overflow-hidden">
-                                <img src="${p.Foto || 'https://via.placeholder.com/300?text=No+Image'}" alt="${namaProduk}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
-                                <span class="absolute top-1 right-1 text-[8px] sm:text-[10px] font-semibold px-1 sm:px-1.5 py-0.5 rounded shadow-sm ${isKosong ? 'bg-red-100 text-red-800' : p.Status === 'Ready' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                                    ${p.Status || 'Ready'}
-                                </span>
-                                ${diskonValue ? `
-                                    <span class="absolute bottom-1 right-1 bg-red-600 text-white text-[8px] font-black px-1 py-0.5 rounded shadow-sm tracking-wider animate-pulse">
-                                        -${diskonValue}%
-                                    </span>
-                                ` : ''}
-                            </div>
-                            <div class="p-2 sm:p-3">
-                                <span class="text-[8px] sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">${p.Kategori || 'General'}</span>
-                                <h4 class="font-bold text-gray-800 dark:text-gray-100 text-[11px] sm:text-sm mt-0.5 line-clamp-2 h-7 sm:h-10 leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">${namaProduk}</h4>
-                                <div class="mt-1 h-8 sm:h-10 flex flex-col justify-end">
-                                    ${htmlHarga}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="p-2 sm:p-3 pt-0 text-center text-[10px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400 group-hover:underline">
-                            Lihat Detail ➔
+        return `
+            <div onclick="openModalByName('${namaAman}')" class="w-36 sm:w-48 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between cursor-pointer group flex-shrink-0">
+                <div>
+                    <div class="relative pb-[100%] bg-gray-50 dark:bg-gray-900 overflow-hidden">
+                        <img src="${p.Foto || 'https://via.placeholder.com/300?text=No+Image'}" alt="${namaProduk}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+                        <span class="absolute top-1 right-1 text-[8px] sm:text-[10px] font-semibold px-1 sm:px-1.5 py-0.5 rounded shadow-sm ${isKosong ? 'bg-red-100 text-red-800' : p.Status === 'Ready' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                            ${p.Status || 'Ready'}
+                        </span>
+                        
+                        <!-- SEKARANG AMAN: Hanya muncul jika diskon benar-benar di atas 0 -->
+                        ${apakahDiskonValid ? `
+                            <span class="absolute bottom-1 right-1 bg-red-600 text-white text-[8px] font-black px-1 py-0.5 rounded shadow-sm tracking-wider animate-pulse">
+                                -${diskonValue}%
+                            </span>
+                        ` : ''}
+                    </div>
+                    <div class="p-2 sm:p-3">
+                        <span class="text-[8px] sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">${p.Kategori || 'General'}</span>
+                        <h4 class="font-bold text-gray-800 dark:text-gray-100 text-[11px] sm:text-sm mt-0.5 line-clamp-2 h-7 sm:h-10 leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">${namaProduk}</h4>
+                        <div class="mt-1 h-8 sm:h-10 flex flex-col justify-end">
+                            ${htmlHarga}
                         </div>
                     </div>
-                `;
-            }).join('');
+                </div>
+                <div class="p-2 sm:p-3 pt-0 text-center text-[10px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400 group-hover:underline">
+                    Lihat Detail ➔
+                </div>
+            </div>
+        `;
+    }).join('');
 
-            // Trik Infinite Loop: Menggabungkan HTML utama + HTML Kloningan di dalam track yang sama
-            grid.innerHTML = itemsHtml + itemsHtml;
+    // Trik Infinite Loop: Menggabungkan HTML utama + HTML Kloningan di dalam track yang sama
+    grid.innerHTML = itemsHtml + itemsHtml;
 
-            // Inisialisasi Kontrol Interaksi Mouse & Sentuhan Tangan via JavaScript
-            initFeaturedScroll();
-        }
+    // Inisialisasi Kontrol Interaksi Mouse & Sentuhan Tangan via JavaScript
+    initFeaturedScroll();
+}
 
         // --- SISTEM BARU JAVASCRIPT ANIMATION LOOP (DRAG, SWIPE & AUTOSCROLL) ---
         function initFeaturedScroll() {
