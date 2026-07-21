@@ -607,33 +607,37 @@ function renderFeaturedProducts() {
             }, { passive: true });
         }
 
-        function applyFilterAndSearch() {
-            const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
-            const keys = allProducts.length > 0 ? Object.keys(allProducts[0]) : [];
-            const diskonKey = keys.find(k => k.toLowerCase() === 'diskon') || 'Diskon';
-            
-            let baseProducts = [];
-            if (currentCategory === 'habis') {
-                baseProducts = allProducts.filter(p => p.Status && p.Status.trim().toLowerCase() === 'kosong');
-            } else if (currentCategory === 'diskon') {
-                baseProducts = allProducts.filter(p => {
-                    const diskonValue = p[diskonKey] ? p[diskonKey].replace(/[^0-9]/g, '') : '';
-                    return diskonValue !== '' && (!p.Status || p.Status.trim().toLowerCase() !== 'kosong');
-                });
-            } else if (currentCategory === 'all') {
-                baseProducts = allProducts.filter(p => (!p.Status || p.Status.trim().toLowerCase() !== 'kosong') && (!p.Kategori || p.Kategori.trim().toLowerCase() !== 'others'));
-            } else {
-                baseProducts = allProducts.filter(p => p.Kategori && p.Kategori.trim().toLowerCase() === currentCategory && (!p.Status || p.Status.trim().toLowerCase() !== 'kosong'));
-            }
+function applyFilterAndSearch() {
+    const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+    const keys = allProducts.length > 0 ? Object.keys(allProducts[0]) : [];
+    const diskonKey = keys.find(k => k.toLowerCase() === 'diskon') || 'Diskon';
+    
+    let baseProducts = [];
+    if (currentCategory === 'habis') {
+        baseProducts = allProducts.filter(p => p.Status && p.Status.trim().toLowerCase() === 'kosong');
+    } else if (currentCategory === 'diskon') {
+        baseProducts = allProducts.filter(p => {
+            // Ambil angka saja dari nilai diskon
+            const rawDiskon = p[diskonKey] ? p[diskonKey].toString().replace(/[^0-9]/g, '') : '';
+            const diskonNum = parseInt(rawDiskon, 10) || 0; // Ubah ke integer (default 0 jika kosong/invalid)
 
-            if (searchQuery !== '') {
-                filteredProducts = baseProducts.filter(p => p.Nama && p.Nama.toLowerCase().includes(searchQuery));
-            } else {
-                filteredProducts = baseProducts;
-            }
+            // Hanya tampilkan jika diskon > 0 DAN statusnya tidak kosong
+            return diskonNum > 0 && (!p.Status || p.Status.trim().toLowerCase() !== 'kosong');
+        });
+    } else if (currentCategory === 'all') {
+        baseProducts = allProducts.filter(p => (!p.Status || p.Status.trim().toLowerCase() !== 'kosong') && (!p.Kategori || p.Kategori.trim().toLowerCase() !== 'others'));
+    } else {
+        baseProducts = allProducts.filter(p => p.Kategori && p.Kategori.trim().toLowerCase() === currentCategory && (!p.Status || p.Status.trim().toLowerCase() !== 'kosong'));
+    }
 
-            renderProducts();
-        }
+    if (searchQuery !== '') {
+        filteredProducts = baseProducts.filter(p => p.Nama && p.Nama.toLowerCase().includes(searchQuery));
+    } else {
+        filteredProducts = baseProducts;
+    }
+
+    renderProducts();
+}
 
         function handleSearch() {
             currentPage = 1;
@@ -2165,3 +2169,4 @@ function logoutAdmin() {
 </div>
 </body>
 </html>
+<!-- bottom -->
